@@ -73,6 +73,29 @@ I should not have to ask for these every session.
 - For Next.js: suggest headers in `next.config.js`
 - Don't skip this step at project setup
 
+### 11. Session Store — Never MemoryStore in Production
+- The default `express-session` MemoryStore leaks memory and crashes the server under real traffic
+- This was confirmed in a live production app (traders.eaforexglobal.com) — caused 21 PM2 restarts and 88% heap usage
+- ALWAYS add a persistent store when setting up sessions:
+  ```js
+  // SQLite-based apps on a VPS
+  const SQLiteStore = require('connect-sqlite3')(session);
+  store: new SQLiteStore({ db: 'sessions.db', dir: path.dirname(process.env.DB_PATH) || __dirname })
+
+  // Cloud / multi-server apps
+  const RedisStore = require('connect-redis').default;
+  store: new RedisStore({ client: redisClient })
+  ```
+- If `DB_PATH` is a full file path like `/opt/data/data.db`, always use `path.dirname(DB_PATH)` when a directory is required — never pass the full path as a directory
+
+### 12. VPS Hardening
+- After any VPS deployment, install fail2ban to block automated scanners:
+  ```bash
+  apt install fail2ban -y && systemctl enable fail2ban && systemctl start fail2ban
+  ```
+- Bots actively scan public IPs for `.env`, `.git/config`, `/admin`, and known exploit paths within minutes of a server going online
+- After PM2 setup, always run `pm2 save` so the process list survives reboots
+
 ---
 
 ## Reminders at Project Start
@@ -81,9 +104,11 @@ When I start a new project or say "I'm starting a new app", do the following aut
 
 1. Create `.gitignore` with `.env`, `.env.local`, `*.pem`, `*.key` excluded
 2. Create `.env.example` with placeholder values (no real secrets)
-3. Set up the database with an external provider (not SQLite)
+3. Set up the database with an external provider (not SQLite on serverless)
 4. Ask: "What external APIs will this use?" — so we can plan server-side key handling upfront
 5. Set up CORS, helmet/security headers, and rate limiting stubs
+6. If using `express-session`, immediately add `connect-sqlite3` or `connect-redis` as the store — never leave MemoryStore as the default
+7. If deploying to a VPS, remind me to install fail2ban after first deploy
 
 ---
 
@@ -98,6 +123,8 @@ Before deploying, have you:
 3. Enabled database backups?
 4. Added a Privacy Policy if you collect any user data?
 5. Run: npm audit --audit-level=high?
+6. Replaced express-session MemoryStore with a persistent store (connect-sqlite3 or connect-redis)?
+7. For VPS: installed fail2ban and run pm2 save?
 ```
 
 ---

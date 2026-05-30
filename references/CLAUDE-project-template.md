@@ -60,10 +60,28 @@ These rules apply to EVERY change, without exception. Do not skip them.
 - Never store JWT tokens or session data in `localStorage` — use httpOnly cookies
 - Never log or display raw error objects from the server to users
 
+### Session Management
+- NEVER use the default `express-session` MemoryStore in production — it leaks memory and crashes the server
+- ALWAYS configure a persistent session store:
+  ```js
+  // For SQLite-based apps (VPS/single server)
+  const SQLiteStore = require('connect-sqlite3')(session);
+  app.use(session({
+    store: new SQLiteStore({ db: 'sessions.db', dir: path.dirname(process.env.DB_PATH) || __dirname }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 86400000 }
+  }));
+  ```
+- For multi-server / cloud deployments use Redis (`connect-redis`) instead
+- NOTE: If `DB_PATH` env var contains a full file path (e.g. `/opt/data/data.db`), use `path.dirname(DB_PATH)` for the session store `dir` — not `DB_PATH` itself
+
 ### API & Server
 - CORS must specify allowed origins explicitly — no wildcard `*` on authenticated routes
 - Rate limiting required on: login, signup, password reset, and any AI/paid API endpoint
 - Secure HTTP headers via `helmet` (Express) or `next.config.js` headers (Next.js)
+- On VPS deployments: install `fail2ban` to auto-block bots scanning for `.env`, `.git`, and exploit paths
 
 ---
 
@@ -122,6 +140,8 @@ Run this mental checklist:
 - [ ] New inputs have Zod validation
 - [ ] New components have loading/error/empty states
 - [ ] No `console.log` statements with user data left in
+- [ ] Session store is NOT the default MemoryStore
+- [ ] `DB_PATH` env var is a file path — use `path.dirname(DB_PATH)` where a directory is needed
 
 ---
 
@@ -146,6 +166,8 @@ Check for and fix the following, one at a time:
 11. Passwords hashed with MD5/SHA instead of bcrypt/argon2
 12. Missing server-side input validation
 13. No error tracking (Sentry) configured
+14. express-session using default MemoryStore (causes memory leak + server restarts in production)
+15. DB_PATH env var used directly as a directory path (it is a full file path — use path.dirname())
 
 For each issue: one-sentence risk explanation + exact code fix.
 ```
