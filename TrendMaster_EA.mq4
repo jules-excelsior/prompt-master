@@ -4,7 +4,7 @@
 //|  Strategy: H4 trend filter + H1 EMA cross + RSI + MACD confirm  |
 //+------------------------------------------------------------------+
 #property copyright "TrendMaster EA"
-#property version   "1.00"
+#property version   "1.10"
 #property strict
 
 //--- Entry Inputs
@@ -26,18 +26,43 @@ input bool   UseTrailingStop   = true;        // Enable trailing stop
 input double ATR_Trail_Mult    = 1.0;         // ATR multiplier for trailing stop
 
 //--- Trade Management Inputs
-input int    MagicNumber       = 20240101;    // Unique EA identifier
+input int    MagicNumber        = 20240101;   // Unique EA identifier
 input int    MaxTradesPerSymbol = 1;          // Max concurrent trades
-input int    ATR_Period        = 14;          // ATR period
-input int    HigherTF          = PERIOD_H4;  // Higher timeframe for trend filter
-input int    Slippage          = 3;           // Max slippage in points
+input int    ATR_Period         = 14;         // ATR period
+input int    HigherTF           = PERIOD_H4; // Higher timeframe for trend filter
+input int    Slippage           = 3;          // Max slippage in points
+
+//--- News Filter Inputs
+input bool   UseNewsFilter      = true;       // Enable news filter
+input int    NewsMinsBefore     = 30;         // Minutes to block BEFORE news event
+input int    NewsMinsAfter      = 30;         // Minutes to block AFTER news event
+input bool   FilterNFP          = true;       // Auto-block NFP (1st Friday 13:30 broker time)
+input bool   CloseTradesOnNews  = false;      // Close open trades when news window starts
+input string NewsFile           = "TrendMaster_News.csv"; // File in MQL4/Files/ — one datetime per line
+
+// News event storage — loaded from file on init and reloaded daily
+datetime newsEvents[];
+int      newsEventCount = 0;
+datetime lastNewsLoad   = 0;
+
+#define NEWS_LABEL "TM_NewsStatus"
 
 //+------------------------------------------------------------------+
 void OnTick()
 {
    if (!IsNewBar(Symbol(), Period())) return;
 
+   // Reload news file once per day
+   if (UseNewsFilter && TimeCurrent() - lastNewsLoad > 86400)
+      LoadNewsFile();
+
    ManageOpenTrades();
+
+   if (UseNewsFilter && IsNewsTime()) {
+      UpdateNewsLabel(true);
+      return;
+   }
+   UpdateNewsLabel(false);
 
    if (CountOpenTrades() >= MaxTradesPerSymbol) return;
 
@@ -211,6 +236,145 @@ int CountOpenTrades()
 }
 
 //+------------------------------------------------------------------+
-int OnInit()  { Print("TrendMaster EA loaded on ", Symbol()); return INIT_SUCCEEDED; }
-void OnDeinit(const int reason) { Print("TrendMaster EA removed. Reason: ", reason); }
+//| Returns true if current time is inside a news blackout window    |
+//+------------------------------------------------------------------+
+bool IsNewsTime()
+{
+   datetime now    = TimeCurrent();
+   int      before = NewsMinsBefore * 60;
+   int      after  = NewsMinsAfter  * 60;
+
+   // Check file-based events
+   for (int i = 0; i < newsEventCount; i++) {
+      long diff = (long)now - (long)newsEvents[i];
+      if (diff >= -before && diff <= after) {
+         if (CloseTradesOnNews && diff >= -before && diff < 0)
+            CloseAllTrades();
+         return true;
+      }
+   }
+
+   // Auto-check NFP: first Friday of each month at 13:30 broker time
+   if (FilterNFP && IsNFPWindow(now, before, after)) return true;
+
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| True if 'now' is within the NFP window for this month            |
+//+------------------------------------------------------------------+
+bool IsNFPWindow(datetime now, int secBefore, int secAfter)
+{
+   MqlDateTime dt;
+   TimeToStruct(now, dt);
+
+   // Find first Friday of current month
+   MqlDateTime nfp;
+   nfp.year  = dt.year;
+   nfp.mon   = dt.mon;
+   nfp.day   = 1;
+   nfp.hour  = 13;
+   nfp.min   = 30;
+   nfp.sec   = 0;
+
+   datetime firstDay = StructToTime(nfp);
+   MqlDateTime fd;
+   TimeToStruct(firstDay, fd);
+
+   // day_of_week: 0=Sun,1=Mon,...,5=Fri
+   int daysToFri = (5 - fd.day_of_week + 7) % 7;
+   nfp.day = 1 + daysToFri;
+   datetime nfpTime = StructToTime(nfp);
+
+   long diff = (long)now - (long)nfpTime;
+   return (diff >= -secBefore && diff <= secAfter);
+}
+
+//+------------------------------------------------------------------+
+//| Load news datetimes from MQL4/Files/TrendMaster_News.csv         |
+//| File format: one entry per line — "YYYY.MM.DD HH:MM"             |
+//| Lines starting with # are comments and are ignored.              |
+//+------------------------------------------------------------------+
+void LoadNewsFile()
+{
+   newsEventCount = 0;
+   ArrayResize(newsEvents, 0);
+   lastNewsLoad = TimeCurrent();
+
+   int handle = FileOpen(NewsFile, FILE_READ | FILE_TXT | FILE_ANSI);
+   if (handle == INVALID_HANDLE) {
+      Print("News file not found: ", NewsFile, " — file-based filter inactive");
+      return;
+   }
+
+   int loaded = 0;
+   while (!FileIsEnding(handle)) {
+      string line = StringTrimRight(StringTrimLeft(FileReadString(handle)));
+      if (StringLen(line) == 0 || StringGetCharacter(line, 0) == '#') continue;
+
+      datetime t = StringToTime(line);
+      if (t > 0) {
+         ArrayResize(newsEvents, loaded + 1);
+         newsEvents[loaded] = t;
+         loaded++;
+      } else {
+         Print("News file: unrecognised line skipped: [", line, "]");
+      }
+   }
+   FileClose(handle);
+   newsEventCount = loaded;
+   Print("News filter loaded ", loaded, " event(s) from ", NewsFile);
+}
+
+//+------------------------------------------------------------------+
+//| Close all EA trades on this symbol — used when news window opens  |
+//+------------------------------------------------------------------+
+void CloseAllTrades()
+{
+   for (int i = OrdersTotal() - 1; i >= 0; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (OrderSymbol() != Symbol() || OrderMagicNumber() != MagicNumber) continue;
+
+      double closePrice = (OrderType() == OP_BUY) ? Bid : Ask;
+      if (!OrderClose(OrderTicket(), OrderLots(), closePrice, Slippage, clrOrange))
+         Print("CloseAllTrades error: ", GetLastError());
+   }
+}
+
+//+------------------------------------------------------------------+
+//| On-chart label: green "CLEAR" or red "NEWS BLOCKED"              |
+//+------------------------------------------------------------------+
+void UpdateNewsLabel(bool blocked)
+{
+   string text  = blocked ? "NEWS BLOCKED" : "CLEAR";
+   color  clr   = blocked ? clrRed         : clrLime;
+
+   if (ObjectFind(0, NEWS_LABEL) < 0) {
+      ObjectCreate(0, NEWS_LABEL, OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, NEWS_LABEL, OBJPROP_CORNER,    CORNER_TOP_RIGHT);
+      ObjectSetInteger(0, NEWS_LABEL, OBJPROP_XDISTANCE, 10);
+      ObjectSetInteger(0, NEWS_LABEL, OBJPROP_YDISTANCE, 20);
+      ObjectSetInteger(0, NEWS_LABEL, OBJPROP_FONTSIZE,  10);
+      ObjectSetString (0, NEWS_LABEL, OBJPROP_FONT,      "Arial Bold");
+   }
+   ObjectSetString (0, NEWS_LABEL, OBJPROP_TEXT,  "News: " + text);
+   ObjectSetInteger(0, NEWS_LABEL, OBJPROP_COLOR, clr);
+}
+
+//+------------------------------------------------------------------+
+int OnInit()
+{
+   Print("TrendMaster EA v1.10 loaded on ", Symbol());
+   if (UseNewsFilter) {
+      LoadNewsFile();
+      UpdateNewsLabel(false);
+   }
+   return INIT_SUCCEEDED;
+}
+
+void OnDeinit(const int reason)
+{
+   ObjectDelete(0, NEWS_LABEL);
+   Print("TrendMaster EA removed. Reason: ", reason);
+}
 //+------------------------------------------------------------------+
