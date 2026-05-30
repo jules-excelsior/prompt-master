@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Admin Dashboard — PromptMaster</title>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body>
+
+<!-- Login Gate -->
+<div id="login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-icon">🛡</div>
+    <h1>Admin Dashboard</h1>
+    <p class="login-sub">PromptMaster — Restricted Access</p>
+    <div class="form-group">
+      <label for="pw-input">Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="pw-input" placeholder="Enter admin password" />
+        <button class="icon-btn" id="toggle-pw">👁</button>
+      </div>
+    </div>
+    <p class="login-error hidden" id="login-error">Incorrect password. Try again.</p>
+    <button class="btn-login" id="btn-login">Unlock Dashboard</button>
+    <a href="index.html" class="back-link">← Back to App</a>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard hidden">
+
+  <header class="dash-header">
+    <div class="dash-brand">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <div class="brand-name">PromptMaster</div>
+        <div class="brand-tag">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="dash-meta">
+      <span class="version-badge">v1.0.0</span>
+      <a href="index.html" class="btn-back">← Back to App</a>
+      <button class="btn-logout" id="btn-logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-num">6</div>
+      <div class="stat-label">AI Modules</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">Claude</div>
+      <div class="stat-label">Model Family</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">SSE</div>
+      <div class="stat-label">Streaming</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">v1.0.0</div>
+      <div class="stat-label">Version</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-date">—</div>
+      <div class="stat-label">Released</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="workflow">⚙ Workflow</button>
+    <button class="tab-btn" data-tab="documentation">📖 Docs</button>
+    <button class="tab-btn" data-tab="changelog">📋 Changelog</button>
+  </div>
+
+  <!-- Tab Content -->
+  <div class="tab-content" id="tab-content">
+    <div class="loading-docs" id="docs-loader">
+      <div class="loader-spin"></div>
+      <span>Loading…</span>
+    </div>
+    <div class="docs-body hidden" id="docs-body"></div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
