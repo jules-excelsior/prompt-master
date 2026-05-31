@@ -37,21 +37,34 @@
       <h2>⚙ API Settings</h2>
       <button class="icon-btn" id="close-settings">✕</button>
     </div>
-    <div class="security-notice">
-      <span class="sec-icon">🔒</span>
+    <!-- Server key mode: shown when admin has set ANTHROPIC_API_KEY in .env -->
+    <div class="server-key-notice hidden" id="server-key-notice">
+      <span class="sec-icon">✅</span>
       <div>
-        <strong>Your API key is secure</strong>
-        <p>Stored only in your browser's localStorage — never sent to our servers, never logged, never stored in any database. Transmitted encrypted over HTTPS only to reach Anthropic's API on your behalf.</p>
+        <strong>API key configured by admin</strong>
+        <p>No API key needed. The administrator has configured a server-side key. You can use all modules instantly without entering anything.</p>
       </div>
     </div>
-    <div class="form-group">
-      <label for="api-key-input">Anthropic API Key</label>
-      <div class="pw-wrap">
-        <input type="password" id="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off"/>
-        <button class="icon-btn" id="toggle-key">👁</button>
+
+    <!-- User key mode: shown when no server key is set -->
+    <div id="user-key-section">
+      <div class="security-notice">
+        <span class="sec-icon">🔒</span>
+        <div>
+          <strong>Your API key is private &amp; secure</strong>
+          <p>Stored only in your browser's localStorage — never sent to our servers, never logged, never stored in any database. Transmitted encrypted over HTTPS only to reach Anthropic's API on your behalf.</p>
+        </div>
       </div>
-      <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="subtle-link">Get your API key ↗</a>
+      <div class="form-group">
+        <label for="api-key-input">Anthropic API Key</label>
+        <div class="pw-wrap">
+          <input type="password" id="api-key-input" placeholder="sk-ant-api03-…" autocomplete="off"/>
+          <button class="icon-btn" id="toggle-key">👁</button>
+        </div>
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="subtle-link">Get your API key ↗</a>
+      </div>
     </div>
+
     <div class="form-group">
       <label for="model-select">Model</label>
       <select id="model-select">

@@ -136,13 +136,41 @@ async function login() {
 document.getElementById('btn-logout').onclick = () => { sessionStorage.removeItem('pm_admin'); location.reload(); };
 
 /* ── Show Dashboard ──────────────────────────────────────── */
-function showDashboard() {
+async function showDashboard() {
   loginScreen.classList.add('hidden');
   dashboard.classList.remove('hidden');
+  await checkServerConfig();
   loadSettings();
   buildModuleGrid();
   buildNavHandlers();
   updateStats();
+}
+
+/* ── Check server config ─────────────────────────────────── */
+let serverHasKey = false;
+async function checkServerConfig() {
+  try {
+    const res  = await fetch('/api/config');
+    const data = await res.json();
+    serverHasKey = data.hasServerKey;
+
+    const serverNotice  = document.getElementById('server-key-notice');
+    const userKeySection = document.getElementById('user-key-section');
+
+    if (serverHasKey) {
+      serverNotice.classList.remove('hidden');
+      userKeySection.classList.add('hidden');
+      // Mark API status as active even without a user key
+      statusDot.classList.add('on');
+      statusLabel.textContent = 'API ready';
+    }
+
+    if (data.defaultModel) {
+      const sel = document.getElementById('model-select');
+      if (sel) sel.value = data.defaultModel;
+      localStorage.setItem('pm_model', data.defaultModel);
+    }
+  } catch { /* server config fetch failed — degrade gracefully */ }
 }
 
 /* ── Settings ────────────────────────────────────────────── */
@@ -288,7 +316,8 @@ btnCopy.onclick     = copyOutput;
 async function generate() {
   if (isGenerating) return;
   const apiKey = localStorage.getItem('pm_api_key');
-  if (!apiKey) { settingsModal.classList.remove('hidden'); return; }
+  // Only prompt for key if server doesn't have one configured
+  if (!serverHasKey && !apiKey) { settingsModal.classList.remove('hidden'); return; }
   const m = MODULES.find(x => x.id === activeModuleId);
   if (!m) return;
   const values = {}; let valid = true;
