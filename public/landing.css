@@ -180,7 +180,7 @@ body::before{
 
 /* ── How Section ─────────────────────────────────────────── */
 .how-section{padding:110px 0;position:relative;}
-.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
 .step-card{
   background:var(--bg);padding:32px 28px;position:relative;
   transition:background .2s;
@@ -245,7 +245,8 @@ body::before{
 .footer-dot{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.4;}
 
 /* ── Responsive ──────────────────────────────────────────── */
-@media(max-width:1024px){.modules-grid{grid-template-columns:repeat(2,1fr);}.steps-grid{grid-template-columns:repeat(2,1fr);}.step-card::after{display:none;}}
+@media(max-width:1024px){.modules-grid{grid-template-columns:repeat(2,1fr);}.steps-grid{grid-template-columns:repeat(3,1fr);}.step-card::after{display:none;}}
+@media(max-width:700px){.steps-grid{grid-template-columns:1fr;}}
 @media(max-width:640px){
   .lnav{padding:0 20px;}
   .modules-grid,.steps-grid{grid-template-columns:1fr;}

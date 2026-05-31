@@ -71,11 +71,30 @@ const MODULES = [
   }
 ];
 
+/* ── Provider Config ─────────────────────────────────────── */
+const PROVIDER_MODELS = {
+  anthropic: [
+    { value: 'claude-opus-4-8',          label: 'Claude Opus 4.8 — Best quality' },
+    { value: 'claude-sonnet-4-6',         label: 'Claude Sonnet 4.6 — Balanced' },
+    { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5 — Fast & economical' }
+  ],
+  deepseek: [
+    { value: 'deepseek-chat',     label: 'DeepSeek Chat — General purpose' },
+    { value: 'deepseek-reasoner', label: 'DeepSeek Reasoner — Advanced reasoning' }
+  ]
+};
+const PROVIDER_KEY_CONFIG = {
+  anthropic: { label: 'Anthropic API Key', placeholder: 'sk-ant-api03-…', link: 'https://console.anthropic.com/settings/keys', linkText: 'Get your Anthropic API key ↗' },
+  deepseek:  { label: 'DeepSeek API Key',  placeholder: 'sk-…',           link: 'https://platform.deepseek.com/api_keys',         linkText: 'Get your DeepSeek API key ↗' }
+};
+
 /* ── State ──────────────────────────────────────────────── */
-let activeModuleId = null;
-let isGenerating   = false;
-let fullOutput     = '';
-let completedIds   = new Set(JSON.parse(localStorage.getItem('pm_done') || '[]'));
+let activeModuleId  = null;
+let isGenerating    = false;
+let fullOutput      = '';
+let completedIds    = new Set(JSON.parse(localStorage.getItem('pm_done') || '[]'));
+let currentProvider = localStorage.getItem('pm_provider') || 'anthropic';
+const serverKeys    = { anthropic: false, deepseek: false };
 
 /* ── DOM ─────────────────────────────────────────────────── */
 const loginScreen   = document.getElementById('login-screen');
@@ -109,6 +128,9 @@ const drawerOverlay = document.getElementById('drawer-overlay');
 const drawerTitle   = document.getElementById('drawer-title');
 const drawerLoader  = document.getElementById('drawer-loader');
 const docsBody      = document.getElementById('docs-body');
+const providerToggle = document.getElementById('provider-toggle');
+const apiKeyLabel   = document.getElementById('api-key-label');
+const apiKeyLink    = document.getElementById('api-key-link');
 
 /* ── Auth ────────────────────────────────────────────────── */
 (function checkAuth() {
@@ -147,57 +169,77 @@ async function showDashboard() {
 }
 
 /* ── Check server config ─────────────────────────────────── */
-let serverHasKey = false;
 async function checkServerConfig() {
   try {
     const res  = await fetch('/api/config');
     const data = await res.json();
-    serverHasKey = data.hasServerKey;
-
-    const serverNotice  = document.getElementById('server-key-notice');
-    const userKeySection = document.getElementById('user-key-section');
-
-    if (serverHasKey) {
-      serverNotice.classList.remove('hidden');
-      userKeySection.classList.add('hidden');
-      // Mark API status as active even without a user key
+    serverKeys.anthropic = data.anthropic?.hasServerKey || false;
+    serverKeys.deepseek  = data.deepseek?.hasServerKey  || false;
+    if (serverKeys.anthropic || serverKeys.deepseek) {
       statusDot.classList.add('on');
       statusLabel.textContent = 'API ready';
     }
+  } catch { /* degrade gracefully */ }
+}
 
-    if (data.defaultModel) {
-      const sel = document.getElementById('model-select');
-      if (sel) sel.value = data.defaultModel;
-      localStorage.setItem('pm_model', data.defaultModel);
-    }
-  } catch { /* server config fetch failed — degrade gracefully */ }
+function updateServerNotice() {
+  const serverNotice   = document.getElementById('server-key-notice');
+  const userKeySection = document.getElementById('user-key-section');
+  const hasKey = serverKeys[currentProvider];
+  serverNotice.classList.toggle('hidden', !hasKey);
+  userKeySection.classList.toggle('hidden', hasKey);
 }
 
 /* ── Settings ────────────────────────────────────────────── */
 function loadSettings() {
-  const key   = localStorage.getItem('pm_api_key') || '';
-  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
-  apiKeyInput.value = key;
-  modelSelect.value = model;
-  updateApiStatus(!!key, model);
+  switchProvider(currentProvider);
 }
 
 function saveSettings() {
   const key   = apiKeyInput.value.trim();
   const model = modelSelect.value;
-  if (key) localStorage.setItem('pm_api_key', key);
-  localStorage.setItem('pm_model', model);
-  updateApiStatus(!!key, model);
+  if (key) localStorage.setItem(`pm_key_${currentProvider}`, key);
+  localStorage.setItem(`pm_model_${currentProvider}`, model);
+  updateApiStatus(!!(key || serverKeys[currentProvider]), model);
   savedMsg.classList.remove('hidden');
   setTimeout(() => savedMsg.classList.add('hidden'), 2000);
 }
 
+function switchProvider(p) {
+  currentProvider = p;
+  localStorage.setItem('pm_provider', p);
+  document.querySelectorAll('.provider-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.provider === p);
+  });
+  const cfg = PROVIDER_KEY_CONFIG[p];
+  if (apiKeyLabel) apiKeyLabel.textContent = cfg.label;
+  if (apiKeyLink)  { apiKeyLink.textContent = cfg.linkText; apiKeyLink.href = cfg.link; }
+  apiKeyInput.placeholder = cfg.placeholder;
+  const savedKey = localStorage.getItem(`pm_key_${p}`) || '';
+  apiKeyInput.value = savedKey;
+  modelSelect.innerHTML = '';
+  PROVIDER_MODELS[p].forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.value; opt.textContent = m.label;
+    modelSelect.appendChild(opt);
+  });
+  const savedModel = localStorage.getItem(`pm_model_${p}`) || PROVIDER_MODELS[p][0].value;
+  modelSelect.value = savedModel;
+  updateServerNotice();
+  updateApiStatus(!!(savedKey || serverKeys[p]), savedModel);
+}
+
 function updateApiStatus(hasKey, model) {
   statusDot.classList.toggle('on', hasKey);
-  statusLabel.textContent = hasKey ? 'API key set' : 'No API key';
+  statusLabel.textContent = hasKey ? 'API ready' : 'No API key';
   if (modelPill) {
-    const n = (model || '').includes('opus') ? 'Opus 4.8' : (model || '').includes('sonnet') ? 'Sonnet 4.6' : 'Haiku 4.5';
-    modelPill.textContent = n;
+    let name;
+    if (currentProvider === 'deepseek') {
+      name = (model || '').includes('reasoner') ? 'DS Reasoner' : 'DS Chat';
+    } else {
+      name = (model || '').includes('opus') ? 'Opus 4.8' : (model || '').includes('sonnet') ? 'Sonnet 4.6' : 'Haiku 4.5';
+    }
+    modelPill.textContent = name;
   }
 }
 
@@ -208,6 +250,12 @@ document.getElementById('close-settings').onclick = () => settingsModal.classLis
 document.getElementById('save-settings').onclick  = saveSettings;
 document.getElementById('toggle-key').onclick = () => { apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password'; };
 settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
+if (providerToggle) {
+  providerToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.provider-btn');
+    if (btn) switchProvider(btn.dataset.provider);
+  });
+}
 
 /* ── Stats ───────────────────────────────────────────────── */
 function updateStats() { if (statDone) statDone.textContent = completedIds.size; }
@@ -315,18 +363,17 @@ btnCopy.onclick     = copyOutput;
 
 async function generate() {
   if (isGenerating) return;
-  const apiKey = localStorage.getItem('pm_api_key');
-  // Only prompt for key if server doesn't have one configured
-  if (!serverHasKey && !apiKey) { settingsModal.classList.remove('hidden'); return; }
+  const apiKey = localStorage.getItem(`pm_key_${currentProvider}`) || localStorage.getItem('pm_api_key') || '';
+  if (!serverKeys[currentProvider] && !apiKey) { settingsModal.classList.remove('hidden'); return; }
   const m = MODULES.find(x => x.id === activeModuleId);
   if (!m) return;
   const values = {}; let valid = true;
   m.inputs.forEach(inp => { const el = document.getElementById(`inp-${inp.id}`); values[inp.id] = el ? el.value.trim() : ''; if (!values[inp.id] && inp.type !== 'select') valid = false; });
   if (!valid) { alert('Please fill in all fields before generating.'); return; }
   setGenerating(true); clearOutput(); showOutputArea(); fullOutput = '';
-  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
+  const model = modelSelect.value || PROVIDER_MODELS[currentProvider][0].value;
   try {
-    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model }) });
+    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider: currentProvider }) });
     if (!resp.ok) { const err = await resp.json().catch(() => ({ error: resp.statusText })); throw new Error(err.error || resp.statusText); }
     const reader = resp.body.getReader(); const decoder = new TextDecoder();
     while (true) { const { done, value } = await reader.read(); if (done) break; fullOutput += decoder.decode(value, { stream: true }); renderStreaming(fullOutput); }

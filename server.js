@@ -1,36 +1,40 @@
 require('dotenv').config();
-const express = require('express');
+const express   = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
-const path = require('path');
-const fs = require('fs');
+const OpenAI    = require('openai');
+const path      = require('path');
+const fs        = require('fs');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const ADMIN_PASSWORD   = process.env.ADMIN_PASSWORD   || 'admin2025';
-const SERVER_API_KEY   = process.env.ANTHROPIC_API_KEY || '';
-const DEFAULT_MODEL    = process.env.DEFAULT_MODEL     || 'claude-opus-4-8';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2025';
 
-/* ── Config endpoint — tells frontend whether a server key exists ── */
+// Server-side keys (optional — set in .env so users don't need their own)
+const SERVER_KEYS = {
+  anthropic: process.env.ANTHROPIC_API_KEY || '',
+  deepseek:  process.env.DEEPSEEK_API_KEY  || ''
+};
+
+const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-reasoner'];
+const ANTHROPIC_MODELS = ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+
+/* ── Config — tells frontend which providers are ready ─────── */
 app.get('/api/config', (req, res) => {
   res.json({
-    hasServerKey: !!SERVER_API_KEY,
-    defaultModel: DEFAULT_MODEL
+    anthropic: { hasServerKey: !!SERVER_KEYS.anthropic },
+    deepseek:  { hasServerKey: !!SERVER_KEYS.deepseek  }
   });
 });
 
-/* ── Generate (streaming) ──────────────────────────────────────── */
+/* ── Generate (streaming) ──────────────────────────────────── */
 app.post('/api/generate', async (req, res) => {
-  const { systemPrompt, userPrompt, apiKey, model } = req.body;
+  const { systemPrompt, userPrompt, apiKey, model, provider = 'anthropic' } = req.body;
 
-  // Server key takes priority; fall back to user-supplied key
-  const effectiveKey = SERVER_API_KEY || apiKey;
-
-  if (!effectiveKey) return res.status(400).json({ error: 'No API key configured. Add your key in Settings.' });
-  if (!userPrompt)   return res.status(400).json({ error: 'Prompt required' });
-
-  const selectedModel = model || DEFAULT_MODEL;
+  const effectiveKey = SERVER_KEYS[provider] || apiKey;
+  if (!effectiveKey) return res.status(400).json({ error: 'No API key configured for this provider.' });
+  if (!userPrompt)   return res.status(400).json({ error: 'Prompt required.' });
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Transfer-Encoding', 'chunked');
@@ -38,20 +42,38 @@ app.post('/api/generate', async (req, res) => {
   res.setHeader('X-Accel-Buffering', 'no');
 
   try {
-    const client = new Anthropic({ apiKey: effectiveKey });
+    if (provider === 'anthropic') {
+      const selectedModel = ANTHROPIC_MODELS.includes(model) ? model : 'claude-opus-4-8';
+      const client = new Anthropic({ apiKey: effectiveKey });
+      const stream = client.messages.stream({
+        model: selectedModel, max_tokens: 4096,
+        system: systemPrompt || 'You are an expert social media strategist.',
+        messages: [{ role: 'user', content: userPrompt }]
+      });
+      stream.on('text', (text) => res.write(text));
+      stream.on('error', (err) => { res.write(`\n\n[Error: ${err.message}]`); res.end(); });
+      await stream.finalMessage();
+      res.end();
 
-    const stream = client.messages.stream({
-      model: selectedModel,
-      max_tokens: 4096,
-      system: systemPrompt || 'You are an expert social media strategist.',
-      messages: [{ role: 'user', content: userPrompt }]
-    });
+    } else if (provider === 'deepseek') {
+      const selectedModel = DEEPSEEK_MODELS.includes(model) ? model : 'deepseek-chat';
+      const client = new OpenAI({ apiKey: effectiveKey, baseURL: 'https://api.deepseek.com' });
+      const stream = await client.chat.completions.create({
+        model: selectedModel, stream: true, max_tokens: 4096,
+        messages: [
+          { role: 'system', content: systemPrompt || 'You are an expert social media strategist.' },
+          { role: 'user',   content: userPrompt }
+        ]
+      });
+      for await (const chunk of stream) {
+        const text = chunk.choices[0]?.delta?.content || '';
+        if (text) res.write(text);
+      }
+      res.end();
 
-    stream.on('text', (text) => res.write(text));
-    stream.on('error', (err) => { res.write(`\n\n[Error: ${err.message}]`); res.end(); });
-
-    await stream.finalMessage();
-    res.end();
+    } else {
+      res.status(400).json({ error: 'Unknown provider.' });
+    }
   } catch (err) {
     const msg = err.message || 'Unknown error';
     if (!res.headersSent) res.status(500).json({ error: msg });
@@ -59,14 +81,14 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-/* ── Admin auth ─────────────────────────────────────────────────── */
+/* ── Admin auth ────────────────────────────────────────────── */
 app.post('/api/verify-admin', (req, res) => {
   const { password } = req.body;
   if (password === ADMIN_PASSWORD) res.json({ success: true });
   else res.status(401).json({ success: false, error: 'Invalid password' });
 });
 
-/* ── Docs content ───────────────────────────────────────────────── */
+/* ── Docs ──────────────────────────────────────────────────── */
 app.get('/api/content/:type', (req, res) => {
   const allowed = ['workflow', 'documentation', 'changelog'];
   const type = req.params.type;
@@ -80,7 +102,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PromptMaster running → http://localhost:${PORT}`);
   console.log(`                      http://127.0.0.1:${PORT}`);
-  console.log(`Admin dashboard   → http://localhost:${PORT}/admin.html`);
   console.log(`Admin password    → ${ADMIN_PASSWORD}`);
-  console.log(`API key mode      → ${SERVER_API_KEY ? '✓ Server key configured (users need no key)' : '⚠ No server key — users must enter their own'}`);
+  console.log(`Anthropic key     → ${SERVER_KEYS.anthropic ? '✓ configured' : '⚠ not set'}`);
+  console.log(`DeepSeek key      → ${SERVER_KEYS.deepseek  ? '✓ configured' : '⚠ not set'}`);
 });
