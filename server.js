@@ -4,28 +4,125 @@ const Anthropic = require('@anthropic-ai/sdk');
 const OpenAI    = require('openai');
 const path      = require('path');
 const fs        = require('fs');
+const crypto    = require('crypto');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin2025';
+/* ── Data persistence ──────────────────────────────────────── */
+const DATA_DIR      = path.join(__dirname, 'data');
+const USERS_FILE    = path.join(DATA_DIR, 'users.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
-// Server-side keys (optional — set in .env so users don't need their own)
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+function loadUsers() {
+  try { return fs.existsSync(USERS_FILE) ? JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8')) : []; }
+  catch { return []; }
+}
+function saveUsers(u) { fs.writeFileSync(USERS_FILE, JSON.stringify(u, null, 2)); }
+
+function loadSettings() {
+  try { return fs.existsSync(SETTINGS_FILE) ? JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf-8')) : {}; }
+  catch { return {}; }
+}
+function saveSettings(s) { fs.writeFileSync(SETTINGS_FILE, JSON.stringify(s, null, 2)); }
+
+function getAdminPassword() {
+  return loadSettings().adminPassword || process.env.ADMIN_PASSWORD || 'admin2025';
+}
+
+function hashPassword(p) {
+  return crypto.createHash('sha256').update(p + 'pm_salt_2025').digest('hex');
+}
+
+/* ── Server-side API keys ──────────────────────────────────── */
 const SERVER_KEYS = {
   anthropic: process.env.ANTHROPIC_API_KEY || '',
   deepseek:  process.env.DEEPSEEK_API_KEY  || ''
 };
 
-const DEEPSEEK_MODELS = ['deepseek-chat', 'deepseek-reasoner'];
+const DEEPSEEK_MODELS  = ['deepseek-chat', 'deepseek-reasoner'];
 const ANTHROPIC_MODELS = ['claude-opus-4-8', 'claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
 
-/* ── Config — tells frontend which providers are ready ─────── */
+/* ── Config ────────────────────────────────────────────────── */
 app.get('/api/config', (req, res) => {
   res.json({
     anthropic: { hasServerKey: !!SERVER_KEYS.anthropic },
     deepseek:  { hasServerKey: !!SERVER_KEYS.deepseek  }
   });
+});
+
+/* ── User Registration ─────────────────────────────────────── */
+app.post('/api/register', (req, res) => {
+  const { firstName, email, password } = req.body;
+  if (!firstName || !email || !password)
+    return res.status(400).json({ error: 'All fields are required.' });
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+
+  const users = loadUsers();
+  if (users.find(u => u.email === email.trim().toLowerCase()))
+    return res.status(409).json({ error: 'Email is already registered.' });
+
+  const user = {
+    id:           crypto.randomUUID(),
+    firstName:    firstName.trim(),
+    email:        email.trim().toLowerCase(),
+    passwordHash: hashPassword(password),
+    joinedAt:     new Date().toISOString()
+  };
+  users.push(user);
+  saveUsers(users);
+  res.json({ success: true, firstName: user.firstName });
+});
+
+/* ── User Login ────────────────────────────────────────────── */
+app.post('/api/user-login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
+
+  const users = loadUsers();
+  const user  = users.find(u => u.email === email.trim().toLowerCase());
+  if (!user || user.passwordHash !== hashPassword(password))
+    return res.status(401).json({ success: false, error: 'Invalid email or password.' });
+
+  res.json({ success: true, firstName: user.firstName });
+});
+
+/* ── Admin Auth ────────────────────────────────────────────── */
+app.post('/api/verify-admin', (req, res) => {
+  const { password } = req.body;
+  if (password === getAdminPassword()) res.json({ success: true });
+  else res.status(401).json({ success: false, error: 'Invalid password' });
+});
+
+/* ── Admin: Get Users ──────────────────────────────────────── */
+app.get('/api/users', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (!pwd || pwd !== getAdminPassword())
+    return res.status(401).json({ error: 'Unauthorized' });
+
+  const users = loadUsers();
+  res.json({
+    total: users.length,
+    users: users.map(u => ({ id: u.id, firstName: u.firstName, email: u.email, joinedAt: u.joinedAt }))
+  });
+});
+
+/* ── Admin: Change Password ────────────────────────────────── */
+app.post('/api/admin/change-password', (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || currentPassword !== getAdminPassword())
+    return res.status(401).json({ error: 'Current password is incorrect.' });
+  if (!newPassword || newPassword.length < 6)
+    return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+
+  const settings = loadSettings();
+  settings.adminPassword = newPassword;
+  saveSettings(settings);
+  res.json({ success: true });
 });
 
 /* ── Generate (streaming) ──────────────────────────────────── */
@@ -81,13 +178,6 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-/* ── Admin auth ────────────────────────────────────────────── */
-app.post('/api/verify-admin', (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) res.json({ success: true });
-  else res.status(401).json({ success: false, error: 'Invalid password' });
-});
-
 /* ── Docs ──────────────────────────────────────────────────── */
 app.get('/api/content/:type', (req, res) => {
   const allowed = ['workflow', 'documentation', 'changelog'];
@@ -102,7 +192,7 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`PromptMaster running → http://localhost:${PORT}`);
   console.log(`                      http://127.0.0.1:${PORT}`);
-  console.log(`Admin password    → ${ADMIN_PASSWORD}`);
+  console.log(`Admin password    → [set in .env or data/settings.json]`);
   console.log(`Anthropic key     → ${SERVER_KEYS.anthropic ? '✓ configured' : '⚠ not set'}`);
   console.log(`DeepSeek key      → ${SERVER_KEYS.deepseek  ? '✓ configured' : '⚠ not set'}`);
 });

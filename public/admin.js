@@ -96,6 +96,11 @@ let completedIds    = new Set(JSON.parse(localStorage.getItem('pm_done') || '[]'
 let currentProvider = localStorage.getItem('pm_provider') || 'anthropic';
 const serverKeys    = { anthropic: false, deepseek: false };
 
+/* ── Session helpers ─────────────────────────────────────── */
+function isAdmin()    { return sessionStorage.getItem('pm_role') === 'admin'; }
+function getUserName(){ return sessionStorage.getItem('pm_user_name') || ''; }
+function getAdminPw() { return sessionStorage.getItem('pm_admin_pw') || ''; }
+
 /* ── DOM ─────────────────────────────────────────────────── */
 const loginScreen   = document.getElementById('login-screen');
 const dashboard     = document.getElementById('dashboard');
@@ -108,6 +113,7 @@ const savedMsg      = document.getElementById('saved-msg');
 const moduleGrid    = document.getElementById('module-grid');
 const viewOverview  = document.getElementById('view-overview');
 const viewModule    = document.getElementById('view-module');
+const viewUsers     = document.getElementById('view-users');
 const mIcon         = document.getElementById('m-icon');
 const mTitle        = document.getElementById('m-title');
 const mDesc         = document.getElementById('m-desc');
@@ -132,11 +138,56 @@ const providerToggle = document.getElementById('provider-toggle');
 const apiKeyLabel   = document.getElementById('api-key-label');
 const apiKeyLink    = document.getElementById('api-key-link');
 
-/* ── Auth ────────────────────────────────────────────────── */
+/* ── Auth Check ──────────────────────────────────────────── */
 (function checkAuth() {
-  if (sessionStorage.getItem('pm_admin') === 'true') showDashboard();
+  const role = sessionStorage.getItem('pm_role');
+  if (role === 'admin' || role === 'user') showDashboard();
 })();
 
+/* ── Login tab switching ─────────────────────────────────── */
+document.querySelectorAll('.login-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const t = tab.dataset.tab;
+    document.querySelectorAll('.login-tab').forEach(x => x.classList.toggle('active', x === tab));
+    document.getElementById('tab-user').classList.toggle('hidden', t !== 'user');
+    document.getElementById('tab-admin').classList.toggle('hidden', t !== 'admin');
+  });
+});
+
+/* ── User Login ──────────────────────────────────────────── */
+document.getElementById('toggle-user-pw').onclick = () => {
+  const i = document.getElementById('user-pw-input');
+  i.type = i.type === 'password' ? 'text' : 'password';
+};
+document.getElementById('btn-user-login').onclick = userLogin;
+document.getElementById('user-pw-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') userLogin(); });
+document.getElementById('user-email-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') userLogin(); });
+
+async function userLogin() {
+  const email    = document.getElementById('user-email-input').value.trim();
+  const password = document.getElementById('user-pw-input').value.trim();
+  const errEl    = document.getElementById('user-login-error');
+  errEl.classList.add('hidden');
+  if (!email || !password) return;
+  try {
+    const res  = await fetch('/api/user-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    const data = await res.json();
+    if (data.success) {
+      sessionStorage.setItem('pm_role', 'user');
+      sessionStorage.setItem('pm_user_name', data.firstName);
+      showDashboard();
+    } else {
+      errEl.textContent = data.error || 'Invalid email or password.';
+      errEl.classList.remove('hidden');
+      document.getElementById('user-pw-input').value = '';
+    }
+  } catch {
+    errEl.textContent = 'Connection error — is the server running?';
+    errEl.classList.remove('hidden');
+  }
+}
+
+/* ── Admin Login ─────────────────────────────────────────── */
 document.getElementById('toggle-pw').onclick = () => {
   pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
 };
@@ -150,22 +201,55 @@ async function login() {
   try {
     const res  = await fetch('/api/verify-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
     const data = await res.json();
-    if (data.success) { sessionStorage.setItem('pm_admin', 'true'); showDashboard(); }
-    else { loginError.classList.remove('hidden'); pwInput.value = ''; pwInput.focus(); }
-  } catch { loginError.textContent = 'Connection error — is the server running?'; loginError.classList.remove('hidden'); }
+    if (data.success) {
+      sessionStorage.setItem('pm_role', 'admin');
+      sessionStorage.setItem('pm_admin_pw', password);
+      showDashboard();
+    } else {
+      loginError.classList.remove('hidden');
+      pwInput.value = '';
+      pwInput.focus();
+    }
+  } catch {
+    loginError.textContent = 'Connection error — is the server running?';
+    loginError.classList.remove('hidden');
+  }
 }
 
-document.getElementById('btn-logout').onclick = () => { sessionStorage.removeItem('pm_admin'); location.reload(); };
+document.getElementById('btn-logout').onclick = () => {
+  sessionStorage.removeItem('pm_role');
+  sessionStorage.removeItem('pm_admin_pw');
+  sessionStorage.removeItem('pm_user_name');
+  location.reload();
+};
 
 /* ── Show Dashboard ──────────────────────────────────────── */
 async function showDashboard() {
   loginScreen.classList.add('hidden');
   dashboard.classList.remove('hidden');
   await checkServerConfig();
+  applyRoleUI();
   loadSettings();
   buildModuleGrid();
   buildNavHandlers();
   updateStats();
+}
+
+/* ── Role-based UI ───────────────────────────────────────── */
+function applyRoleUI() {
+  const admin     = isAdmin();
+  const firstName = getUserName();
+
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.classList.toggle('hidden', !admin);
+  });
+
+  if (!admin && firstName) {
+    const tag = document.getElementById('brand-tag');
+    if (tag) tag.textContent = `Hi, ${firstName}! 👋`;
+    const title = document.getElementById('overview-title');
+    if (title) title.textContent = `Welcome, ${firstName}`;
+  }
 }
 
 /* ── Check server config ─────────────────────────────────── */
@@ -187,13 +271,11 @@ function updateServerNotice() {
   const userKeySection = document.getElementById('user-key-section');
   const hasKey = serverKeys[currentProvider];
   serverNotice.classList.toggle('hidden', !hasKey);
-  userKeySection.classList.toggle('hidden', hasKey);
+  if (userKeySection) userKeySection.classList.toggle('hidden', hasKey);
 }
 
 /* ── Settings ────────────────────────────────────────────── */
-function loadSettings() {
-  switchProvider(currentProvider);
-}
+function loadSettings() { switchProvider(currentProvider); }
 
 function saveSettings() {
   const key   = apiKeyInput.value.trim();
@@ -257,6 +339,39 @@ if (providerToggle) {
   });
 }
 
+/* ── Change Admin Password ───────────────────────────────── */
+document.getElementById('btn-change-pw').onclick = changeAdminPassword;
+
+async function changeAdminPassword() {
+  const currentPw = document.getElementById('current-pw-input').value.trim();
+  const newPw     = document.getElementById('new-pw-input').value.trim();
+  const msgEl     = document.getElementById('change-pw-msg');
+  msgEl.className = 'change-pw-msg hidden';
+
+  if (!currentPw || !newPw) {
+    msgEl.textContent = 'Both fields are required.';
+    msgEl.className = 'change-pw-msg error';
+    return;
+  }
+  try {
+    const res  = await fetch('/api/admin/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }) });
+    const data = await res.json();
+    if (res.ok) {
+      sessionStorage.setItem('pm_admin_pw', newPw);
+      msgEl.textContent = '✓ Password updated!';
+      msgEl.className = 'change-pw-msg success';
+      document.getElementById('current-pw-input').value = '';
+      document.getElementById('new-pw-input').value = '';
+    } else {
+      msgEl.textContent = data.error || 'Failed to update password.';
+      msgEl.className = 'change-pw-msg error';
+    }
+  } catch {
+    msgEl.textContent = 'Connection error.';
+    msgEl.className = 'change-pw-msg error';
+  }
+}
+
 /* ── Stats ───────────────────────────────────────────────── */
 function updateStats() { if (statDone) statDone.textContent = completedIds.size; }
 
@@ -289,7 +404,8 @@ function buildNavHandlers() {
     const view = btn.dataset.view;
     btn.onclick = () => {
       if (view === 'overview') switchView('overview');
-      if (view === 'module')   openModule(btn.dataset.id);
+      else if (view === 'module') openModule(btn.dataset.id);
+      else if (view === 'users' && isAdmin()) openUsersView();
       setActiveNav(btn);
     };
     if (view === 'module' && completedIds.has(btn.dataset.id)) btn.classList.add('done');
@@ -309,6 +425,7 @@ function setActiveNav(target) {
 function switchView(name) {
   viewOverview.classList.toggle('active', name === 'overview');
   viewModule.classList.toggle('active',   name === 'module');
+  if (viewUsers) viewUsers.classList.toggle('active', name === 'users');
 }
 
 /* ── Open Module ─────────────────────────────────────────── */
@@ -364,16 +481,27 @@ btnCopy.onclick     = copyOutput;
 async function generate() {
   if (isGenerating) return;
   const apiKey = localStorage.getItem(`pm_key_${currentProvider}`) || localStorage.getItem('pm_api_key') || '';
-  if (!serverKeys[currentProvider] && !apiKey) { settingsModal.classList.remove('hidden'); return; }
+  if (!serverKeys[currentProvider] && !apiKey) {
+    if (isAdmin()) settingsModal.classList.remove('hidden');
+    else { alert('The AI service is not available right now. Please contact the admin.'); }
+    return;
+  }
   const m = MODULES.find(x => x.id === activeModuleId);
   if (!m) return;
   const values = {}; let valid = true;
-  m.inputs.forEach(inp => { const el = document.getElementById(`inp-${inp.id}`); values[inp.id] = el ? el.value.trim() : ''; if (!values[inp.id] && inp.type !== 'select') valid = false; });
+  m.inputs.forEach(inp => {
+    const el = document.getElementById(`inp-${inp.id}`);
+    values[inp.id] = el ? el.value.trim() : '';
+    if (!values[inp.id] && inp.type !== 'select') valid = false;
+  });
   if (!valid) { alert('Please fill in all fields before generating.'); return; }
   setGenerating(true); clearOutput(); showOutputArea(); fullOutput = '';
   const model = modelSelect.value || PROVIDER_MODELS[currentProvider][0].value;
   try {
-    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider: currentProvider }) });
+    const resp = await fetch('/api/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider: currentProvider })
+    });
     if (!resp.ok) { const err = await resp.json().catch(() => ({ error: resp.statusText })); throw new Error(err.error || resp.statusText); }
     const reader = resp.body.getReader(); const decoder = new TextDecoder();
     while (true) { const { done, value } = await reader.read(); if (done) break; fullOutput += decoder.decode(value, { stream: true }); renderStreaming(fullOutput); }
@@ -411,6 +539,53 @@ function markDone(id) {
   updateStats(); buildModuleGrid();
 }
 
+/* ── Users View ──────────────────────────────────────────── */
+async function openUsersView() {
+  switchView('users');
+  const wrap     = document.getElementById('users-table-wrap');
+  const statEl   = document.getElementById('stat-total-users');
+  const navBadge = document.getElementById('nav-user-count');
+  wrap.innerHTML = '<div class="users-loading"><div class="loader-spin"></div> Loading users…</div>';
+
+  try {
+    const res  = await fetch('/api/users', { headers: { 'x-admin-password': getAdminPw() } });
+    if (!res.ok) throw new Error('Unauthorized or server error');
+    const data = await res.json();
+    if (statEl)   statEl.textContent   = data.total;
+    if (navBadge) navBadge.textContent = data.total;
+
+    if (data.users.length === 0) {
+      wrap.innerHTML = `
+        <div class="users-empty">
+          <div class="ue-icon">👥</div>
+          <h3>No users yet</h3>
+          <p>Share the landing page to start getting sign-ups!</p>
+        </div>`;
+      return;
+    }
+
+    const table = document.createElement('table');
+    table.className = 'users-table';
+    table.innerHTML = `
+      <thead>
+        <tr><th>#</th><th>First Name</th><th>Email</th><th>Joined</th></tr>
+      </thead>
+      <tbody>
+        ${data.users.map((u, i) => `
+          <tr>
+            <td class="row-num">${i + 1}</td>
+            <td><strong>${escapeHtml(u.firstName)}</strong></td>
+            <td class="email-cell">${escapeHtml(u.email)}</td>
+            <td class="date-cell">${new Date(u.joinedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })}</td>
+          </tr>`).join('')}
+      </tbody>`;
+    wrap.innerHTML = '';
+    wrap.appendChild(table);
+  } catch (err) {
+    wrap.innerHTML = `<div class="users-empty"><p style="color:#ef4444">Failed to load: ${escapeHtml(err.message)}</p></div>`;
+  }
+}
+
 /* ── Doc Drawer ──────────────────────────────────────────── */
 const DOC_TITLES = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog' };
 
@@ -443,9 +618,9 @@ function closeDrawer() {
 
 document.getElementById('close-drawer').onclick = closeDrawer;
 drawerOverlay.onclick = closeDrawer;
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeDrawer(); settingsModal.classList.add('hidden'); } });
 
 /* ── Util ────────────────────────────────────────────────── */
 function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }

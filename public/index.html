@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>PromptMaster — AI Social Media Agency</title>
+  <title>PromptMaster — Free AI Social Media Agency</title>
   <link rel="stylesheet" href="landing.css"/>
 </head>
 <body>
@@ -14,7 +14,10 @@
     <div class="lnav-icon">⚡</div>
     <span>PromptMaster</span>
   </div>
-  <a href="admin.html" class="lnav-cta">Access Dashboard →</a>
+  <div class="lnav-right">
+    <a href="#signup" class="lnav-link">Sign Up Free</a>
+    <a href="admin.html" class="lnav-cta">Sign In →</a>
+  </div>
 </nav>
 
 <!-- Hero -->
@@ -23,20 +26,20 @@
   <div class="hero-orb hero-orb2"></div>
   <div class="hero-orb hero-orb3"></div>
   <div class="hero-inner">
-    <div class="hero-eyebrow">✦ AI-Powered Social Media Growth</div>
+    <div class="hero-eyebrow">✦ 100% Free — No Credit Card Required</div>
     <h1 class="hero-title">
       Your Complete<br/>
       <span class="grad-text">AI Social Media<br/>Agency</span>
     </h1>
-    <p class="hero-sub">6 specialized AI modules to dominate every aspect of social media growth — strategy, audience psychology, viral content, hooks, algorithms, and repurposing.</p>
+    <p class="hero-sub">6 specialized AI modules to dominate every aspect of social media growth — strategy, audience psychology, viral content, hooks, algorithms, and repurposing. Completely free.</p>
     <div class="hero-actions">
-      <a href="admin.html" class="btn-primary">Start Growing Now →</a>
+      <a href="#signup" class="btn-primary">Get Free Access →</a>
       <a href="#modules" class="btn-ghost">Explore Modules ↓</a>
     </div>
     <div class="hero-stats">
       <div class="hstat"><strong>6</strong><span>AI Modules</span></div>
       <div class="hstat-sep"></div>
-      <div class="hstat"><strong>Live</strong><span>Streaming Output</span></div>
+      <div class="hstat"><strong>Free</strong><span>Forever</span></div>
       <div class="hstat-sep"></div>
       <div class="hstat"><strong>Multi</strong><span>AI Providers</span></div>
       <div class="hstat-sep"></div>
@@ -122,8 +125,8 @@
     <div class="steps-grid">
       <div class="step-card">
         <div class="step-num">01</div>
-        <h3>Access Your Dashboard</h3>
-        <p>Log in with your password to unlock the secure, password-protected AI agency workspace.</p>
+        <h3>Create Free Account</h3>
+        <p>Sign up with your first name and email. No credit card, no commitment — 100% free access instantly.</p>
       </div>
       <div class="step-card">
         <div class="step-num">02</div>
@@ -139,6 +142,47 @@
   </div>
 </section>
 
+<!-- Free Signup -->
+<section class="signup-section" id="signup">
+  <div class="section-inner">
+    <div class="signup-card">
+      <div class="signup-left">
+        <div class="section-badge">✦ Free Forever</div>
+        <h2 class="section-title" style="margin-bottom:20px">Start Growing<br/><span class="grad-text">Your Audience Today</span></h2>
+        <ul class="signup-perks">
+          <li><span class="perk-check">✓</span> 6 AI-powered social media modules</li>
+          <li><span class="perk-check">✓</span> Live streaming AI output</li>
+          <li><span class="perk-check">✓</span> Anthropic Claude &amp; DeepSeek AI</li>
+          <li><span class="perk-check">✓</span> No credit card required</li>
+          <li><span class="perk-check">✓</span> Secure &amp; private platform</li>
+        </ul>
+      </div>
+      <div class="signup-right">
+        <div class="signup-form-card">
+          <h3>Create Your Free Account</h3>
+          <p class="signup-form-sub">Join and access all 6 AI modules instantly.</p>
+          <div class="sform-group">
+            <label for="reg-first-name">First Name</label>
+            <input type="text" id="reg-first-name" placeholder="Your first name" autocomplete="given-name"/>
+          </div>
+          <div class="sform-group">
+            <label for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email"/>
+          </div>
+          <div class="sform-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" placeholder="Min. 6 characters" autocomplete="new-password"/>
+          </div>
+          <p class="reg-error hidden" id="reg-error"></p>
+          <button class="btn-primary reg-submit" id="btn-register">Create Free Account →</button>
+          <p class="reg-success hidden" id="reg-success"></p>
+          <p class="reg-login-hint">Already have an account? <a href="admin.html">Sign in →</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- Security -->
 <section class="security-section">
   <div class="section-inner">
@@ -146,7 +190,7 @@
       <div class="security-icon-lg">🛡️</div>
       <div>
         <h2>A Secure &amp; Stable Platform</h2>
-        <p>PromptMaster is engineered for reliability and security. Your workspace is protected by password authentication. API keys stay in your browser and are never transmitted to or stored on our servers. All communications are encrypted over HTTPS. A professional-grade, stable foundation you can depend on for your social media operations.</p>
+        <p>PromptMaster is engineered for reliability and security. Your workspace is protected by authentication. API keys stay in your browser and are never stored on our servers. All traffic is encrypted with HTTPS. A professional, stable foundation for your social media operations.</p>
       </div>
     </div>
   </div>
@@ -157,8 +201,8 @@
   <div class="cta-bg"></div>
   <div class="section-inner cta-inner">
     <h2>Ready to Build Your<br/><span class="grad-text">Social Media Empire?</span></h2>
-    <p>Access all 6 AI modules inside your secure dashboard.</p>
-    <a href="admin.html" class="btn-primary btn-lg">Access Dashboard →</a>
+    <p>Join free today. No credit card required.</p>
+    <a href="#signup" class="btn-primary btn-lg">Get Free Access →</a>
   </div>
 </section>
 
@@ -170,14 +214,77 @@
       <span>PromptMaster</span>
     </div>
     <div class="footer-links">
-      <a href="admin.html">Dashboard</a>
+      <a href="admin.html">Sign In</a>
       <div class="footer-dot"></div>
       <span>Powered by Anthropic &amp; DeepSeek</span>
       <div class="footer-dot"></div>
-      <span>v1.0.0</span>
+      <span>Free Forever</span>
     </div>
   </div>
 </footer>
 
+<script>
+(function() {
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  document.getElementById('btn-register').addEventListener('click', register);
+  ['reg-first-name','reg-email','reg-password'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+  });
+
+  async function register() {
+    const firstName = document.getElementById('reg-first-name').value.trim();
+    const email     = document.getElementById('reg-email').value.trim();
+    const password  = document.getElementById('reg-password').value.trim();
+    const errEl     = document.getElementById('reg-error');
+    const successEl = document.getElementById('reg-success');
+    const btn       = document.getElementById('btn-register');
+
+    errEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+
+    if (!firstName || !email || !password) {
+      errEl.textContent = 'All fields are required.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = 'Password must be at least 6 characters.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    try {
+      const res  = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        successEl.innerHTML = `✓ Welcome, <strong>${escHtml(data.firstName)}</strong>! Your account is ready. <a href="admin.html">Access the dashboard →</a>`;
+        successEl.classList.remove('hidden');
+        document.getElementById('reg-first-name').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-password').value = '';
+        btn.textContent = '✓ Account Created';
+      } else {
+        errEl.textContent = data.error || 'Registration failed. Please try again.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Create Free Account →';
+      }
+    } catch {
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Create Free Account →';
+    }
+  }
+})();
+</script>
 </body>
 </html>
