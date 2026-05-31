@@ -194,8 +194,15 @@ function buildModuleGrid() {
     card.style.setProperty('--module-color', m.color);
     card.style.setProperty('--module-gradient', m.gradient);
     const done = completedIds.has(m.id);
-    card.innerHTML = `<div class="mc-icon">${m.icon}</div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div>${done ? '<div class="mc-done">✓ Completed</div>' : ''}`;
-    card.onclick = () => openModule(m.id);
+    card.innerHTML = `
+      <div class="mc-header">
+        <div class="mc-icon-sm" style="background:${m.gradient}">${m.icon}</div>
+      </div>
+      <div class="mc-name">${m.name}</div>
+      <div class="mc-desc">${m.desc}</div>
+      ${done ? '<div class="mc-done">✓ Completed</div>' : ''}
+    `;
+    card.addEventListener('click', () => openModule(m.id));
     moduleGrid.appendChild(card);
   });
 }
@@ -224,8 +231,6 @@ function setActiveNav(target) {
 
 /* ── View Switcher ───────────────────────────────────────── */
 function switchView(name) {
-  viewOverview.style.display = name === 'overview' ? 'flex' : 'none';
-  viewModule.style.display   = name === 'module'   ? 'flex' : 'none';
   viewOverview.classList.toggle('active', name === 'overview');
   viewModule.classList.toggle('active',   name === 'module');
 }
