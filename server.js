@@ -77,8 +77,9 @@ app.get('/api/content/:type', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`PromptMaster running → http://localhost:${PORT}`);
+  console.log(`                      http://127.0.0.1:${PORT}`);
   console.log(`Admin dashboard   → http://localhost:${PORT}/admin.html`);
   console.log(`Admin password    → ${ADMIN_PASSWORD}`);
 });
