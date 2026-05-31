@@ -1,19 +1,125 @@
 'use strict';
 
-const loginScreen = document.getElementById('login-screen');
-const dashboard   = document.getElementById('dashboard');
-const pwInput     = document.getElementById('pw-input');
-const loginError  = document.getElementById('login-error');
-const docsLoader  = document.getElementById('docs-loader');
-const docsBody    = document.getElementById('docs-body');
+/* ── Module Definitions ─────────────────────────────────── */
+const MODULES = [
+  {
+    id: 'growth-strategy',
+    name: 'Growth Strategy Commander',
+    icon: '⚡', color: '#4f9cf9',
+    gradient: 'linear-gradient(135deg,#4f9cf9,#1e6fd4)',
+    desc: 'Elite social media manager mode — audience psychology, platform algorithms, viral distribution & scalable content ops.',
+    inputs: [
+      { id: 'niche',    label: 'Your Niche',  type: 'text',   ph: 'e.g., fitness coaching, SaaS, personal finance' },
+      { id: 'platform', label: 'Platform',     type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
+      { id: 'goal',     label: 'Growth Goal',  type: 'text',   ph: 'e.g., reach 10K followers in 90 days' }
+    ],
+    system: 'You are an elite social media manager and growth strategist. Respond with richly structured markdown.',
+    prompt: (v) => `Act as an elite social media manager and growth strategist.\n\nNiche: ${v.niche}\nPlatform: ${v.platform}\nGrowth Goal: ${v.goal}\n\nDeliver a full growth strategy with sections:\n## Strategic Positioning\n## Core Content Pillars (5–7)\n## Posting Schedule & Cadence\n## Algorithm-Specific Engagement Tactics\n## KPIs & Success Metrics\n## 30-Day Action Plan (week by week)\n\nBe specific and actionable.`
+  },
+  {
+    id: 'audience-psychology',
+    name: 'Audience Psychology Decoder',
+    icon: '🧠', color: '#a855f7',
+    gradient: 'linear-gradient(135deg,#a855f7,#7c3aed)',
+    desc: 'Deep audience analysis — desires, frustrations, emotional triggers, attention patterns & psychological motivations.',
+    inputs: [
+      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., online fitness coaching, B2B SaaS, crypto investing' }
+    ],
+    system: 'You are an expert audience psychologist and consumer behavior researcher. Use markdown with clear section headers.',
+    prompt: (v) => `Analyze the target audience for the "${v.niche}" niche deeply.\n\n## Core Demographics & Psychographics\n## Top 5 Desires & Aspirations\n## Top 5 Frustrations & Pain Points\n## Key Emotional Triggers\n## Attention Patterns & Scroll Behavior\n## Content Format Preferences\n## Psychological Motivations\n## Identity & Self-Perception Gap\n## Content Strategy Implications\n\nBe specific to "${v.niche}".`
+  },
+  {
+    id: 'viral-content',
+    name: 'Viral Content Idea Engine',
+    icon: '🚀', color: '#f97316',
+    gradient: 'linear-gradient(135deg,#f97316,#ea580c)',
+    desc: 'Generate 30 highly engaging content ideas using curiosity triggers, emotional reactions & proven viral frameworks.',
+    inputs: [
+      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., productivity for entrepreneurs, vegan recipes, web design' }
+    ],
+    system: 'You are a viral content strategist. Generate specific, high-potential ideas in clear markdown sections.',
+    prompt: (v) => `Generate 30 highly engaging content ideas for the "${v.niche}" niche.\n\n## 🔍 Curiosity & Mystery (5 ideas)\n## 💥 Emotional Story & Transformation (5 ideas)\n## 🔥 Controversy & Hot Takes (5 ideas)\n## 😣 Pain Point Solutions (5 ideas)\n## ✅ Proof & Social Validation (5 ideas)\n## 📚 Education & Value Bombs (5 ideas)\n\nFor each idea: **Concept**, **Why it works**, **Hook line**. All specific to "${v.niche}".`
+  },
+  {
+    id: 'hook-engineering',
+    name: 'Hook Engineering Lab',
+    icon: '🎯', color: '#ef4444',
+    gradient: 'linear-gradient(135deg,#ef4444,#dc2626)',
+    desc: 'Scroll-stopping opening hooks engineered to capture attention instantly using psychology & proven triggers.',
+    inputs: [
+      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., real estate investing, mindset coaching, AI tools' }
+    ],
+    system: 'You are a master copywriter and hook engineer. Write powerful, platform-ready hooks in clear markdown sections.',
+    prompt: (v) => `Generate 20 scroll-stopping hooks for the "${v.niche}" niche.\n\n## 🕳️ Curiosity Gap Hooks (4)\n## 🪞 Identity & Relatability Hooks (4)\n## 📊 Shocking Stat & Fact Hooks (3)\n## ⏰ Urgency & Stakes Hooks (3)\n## 🚫 Contrarian & Controversy Hooks (3)\n## 🔄 Transformation Hooks (3)\n\nFor each: write the **exact hook text** (copy-ready) + psychological trigger in parentheses. All specific to "${v.niche}".`
+  },
+  {
+    id: 'algorithm-strategy',
+    name: 'Algorithm Intelligence Briefing',
+    icon: '📡', color: '#22c55e',
+    gradient: 'linear-gradient(135deg,#22c55e,#16a34a)',
+    desc: 'Platform-specific algorithm playbook for maximum organic reach, distribution & visibility.',
+    inputs: [
+      { id: 'platform', label: 'Platform',     type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
+      { id: 'niche',    label: 'Your Niche',   type: 'text',   ph: 'e.g., fashion, tech reviews, business coaching' }
+    ],
+    system: 'You are a platform algorithm expert. Deliver specific, actionable intelligence in markdown.',
+    prompt: (v) => `Algorithm intelligence briefing for ${v.platform} in the "${v.niche}" niche.\n\n## How the ${v.platform} Algorithm Works\n## Key Engagement Signals (ranked)\n## Optimal Content Structure & Format\n## Posting Strategy (timing, frequency)\n## Niche-Specific Tactics for "${v.niche}"\n## Engagement Loop Strategy\n## Reach Killers — What to Avoid\n## 30-Day Algorithm Reset Plan\n\nBe ${v.platform}-specific.`
+  },
+  {
+    id: 'content-repurposing',
+    name: 'Content Repurposing Multiplier',
+    icon: '♻️', color: '#f5c842',
+    gradient: 'linear-gradient(135deg,#f5c842,#d97706)',
+    desc: 'Transform one content idea into 6+ platform-native formats for scalable, high-output content production.',
+    inputs: [
+      { id: 'content', label: 'Your Content Idea', type: 'textarea', ph: 'Paste your content idea, topic, script, or core message here…' }
+    ],
+    system: 'You are a content repurposing strategist. Use markdown ## headers for each format.',
+    prompt: (v) => `Repurpose this content idea into 6 platform-specific formats:\n\n**Original Idea:**\n${v.content}\n\n## 1. Short-Form Video Script (TikTok/Reels/Shorts)\n## 2. Carousel Post (Instagram/LinkedIn)\n## 3. Long-Form Caption (Instagram/Facebook)\n## 4. Twitter/X Thread\n## 5. LinkedIn Post\n## 6. Engagement Bait Post\n\nEach format must be platform-native and copy-ready.`
+  }
+];
 
-let currentTab = 'workflow';
+/* ── State ──────────────────────────────────────────────── */
+let activeModuleId = null;
+let isGenerating   = false;
+let fullOutput     = '';
+let completedIds   = new Set(JSON.parse(localStorage.getItem('pm_done') || '[]'));
+
+/* ── DOM ─────────────────────────────────────────────────── */
+const loginScreen    = document.getElementById('login-screen');
+const dashboard      = document.getElementById('dashboard');
+const pwInput        = document.getElementById('pw-input');
+const loginError     = document.getElementById('login-error');
+const settingsModal  = document.getElementById('settings-modal');
+const apiKeyInput    = document.getElementById('api-key-input');
+const modelSelect    = document.getElementById('model-select');
+const savedMsg       = document.getElementById('saved-msg');
+const moduleGrid     = document.getElementById('module-grid');
+const viewOverview   = document.getElementById('view-overview');
+const viewModule     = document.getElementById('view-module');
+const viewDoc        = document.getElementById('view-doc');
+const mIcon          = document.getElementById('m-icon');
+const mTitle         = document.getElementById('m-title');
+const mDesc          = document.getElementById('m-desc');
+const inputFields    = document.getElementById('input-fields');
+const btnGenerate    = document.getElementById('btn-generate');
+const btnText        = document.getElementById('btn-text');
+const btnSpinner     = document.getElementById('btn-spinner');
+const btnClear       = document.getElementById('btn-clear');
+const btnCopy        = document.getElementById('btn-copy');
+const outputPlaceholder = document.getElementById('output-placeholder');
+const outputContent  = document.getElementById('output-content');
+const docTitle       = document.getElementById('doc-title');
+const docLoader      = document.getElementById('doc-loader');
+const docsBody       = document.getElementById('docs-body');
+const statusDot      = document.getElementById('status-dot');
+const statusLabel    = document.getElementById('status-label');
+const statDone       = document.getElementById('stat-done');
+const statModel      = document.getElementById('stat-model');
 
 /* ── Auth ────────────────────────────────────────────────── */
 function checkAuth() {
-  if (sessionStorage.getItem('pm_admin') === 'true') {
-    showDashboard();
-  }
+  if (sessionStorage.getItem('pm_admin') === 'true') showDashboard();
 }
 
 document.getElementById('toggle-pw').onclick = () => {
@@ -26,11 +132,9 @@ pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 async function login() {
   const password = pwInput.value.trim();
   if (!password) return;
-
   loginError.classList.add('hidden');
-
   try {
-    const res = await fetch('/api/verify-admin', {
+    const res  = await fetch('/api/verify-admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password })
@@ -45,19 +149,9 @@ async function login() {
       pwInput.focus();
     }
   } catch {
-    loginError.textContent = 'Connection error. Is the server running?';
+    loginError.textContent = 'Connection error — is the server running?';
     loginError.classList.remove('hidden');
   }
-}
-
-function showDashboard() {
-  loginScreen.classList.add('hidden');
-  dashboard.classList.remove('hidden');
-
-  document.getElementById('stat-date').textContent = '2026-05-30';
-
-  setupTabs();
-  loadTab('workflow');
 }
 
 document.getElementById('btn-logout').onclick = () => {
@@ -65,35 +159,304 @@ document.getElementById('btn-logout').onclick = () => {
   location.reload();
 };
 
-/* ── Tabs ────────────────────────────────────────────────── */
-function setupTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      loadTab(btn.dataset.tab);
-    };
+/* ── Show Dashboard ──────────────────────────────────────── */
+function showDashboard() {
+  loginScreen.classList.add('hidden');
+  dashboard.classList.remove('hidden');
+  loadSettings();
+  buildModuleGrid();
+  buildNavHandlers();
+  updateStats();
+}
+
+/* ── Settings ────────────────────────────────────────────── */
+function loadSettings() {
+  const key   = localStorage.getItem('pm_api_key') || '';
+  const model = localStorage.getItem('pm_model')   || 'claude-opus-4-8';
+  apiKeyInput.value = key;
+  modelSelect.value = model;
+  updateApiStatus(!!key, model);
+}
+
+function saveSettings() {
+  const key   = apiKeyInput.value.trim();
+  const model = modelSelect.value;
+  if (key) localStorage.setItem('pm_api_key', key);
+  localStorage.setItem('pm_model', model);
+  updateApiStatus(!!key, model);
+  savedMsg.classList.remove('hidden');
+  setTimeout(() => savedMsg.classList.add('hidden'), 2000);
+}
+
+function updateApiStatus(hasKey, model) {
+  statusDot.classList.toggle('on', hasKey);
+  statusLabel.textContent = hasKey ? 'API key set' : 'No API key';
+  if (statModel) {
+    const name = (model || '').includes('opus') ? 'Opus' : (model || '').includes('sonnet') ? 'Sonnet' : 'Haiku';
+    statModel.textContent = name;
+  }
+}
+
+document.getElementById('open-settings').onclick  = () => settingsModal.classList.remove('hidden');
+document.getElementById('close-settings').onclick = () => settingsModal.classList.add('hidden');
+document.getElementById('save-settings').onclick  = saveSettings;
+document.getElementById('toggle-key').onclick = () => {
+  apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+};
+settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
+
+/* ── Stats ───────────────────────────────────────────────── */
+function updateStats() {
+  if (statDone) statDone.textContent = completedIds.size;
+}
+
+/* ── Module Grid (Overview) ──────────────────────────────── */
+function buildModuleGrid() {
+  moduleGrid.innerHTML = '';
+  MODULES.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'module-card';
+    card.style.setProperty('--module-color', m.color);
+    card.style.setProperty('--module-gradient', m.gradient);
+    const done = completedIds.has(m.id);
+    card.innerHTML = `
+      <div class="mc-icon">${m.icon}</div>
+      <div class="mc-name">${m.name}</div>
+      <div class="mc-desc">${m.desc}</div>
+      ${done ? '<div class="mc-badge">✓ Completed</div>' : ''}
+    `;
+    card.onclick = () => openModule(m.id);
+    moduleGrid.appendChild(card);
   });
 }
 
-async function loadTab(type) {
-  currentTab = type;
-  docsLoader.classList.remove('hidden');
+/* ── Nav Handlers ────────────────────────────────────────── */
+function buildNavHandlers() {
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    const view = btn.dataset.view;
+    btn.onclick = () => {
+      if (view === 'overview')  switchView('overview');
+      if (view === 'module')    openModule(btn.dataset.id);
+      if (view === 'doc')       openDoc(btn.dataset.doc);
+      setActiveNav(btn);
+    };
+    if (view === 'module' && completedIds.has(btn.dataset.id)) {
+      btn.classList.add('done');
+    }
+  });
+}
+
+function setActiveNav(target) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  target.classList.add('active');
+}
+
+/* ── View Switcher ───────────────────────────────────────── */
+function switchView(name) {
+  viewOverview.classList.toggle('active', name === 'overview');
+  viewOverview.classList.toggle('hidden', name !== 'overview');
+  viewModule.classList.toggle('active', name === 'module');
+  viewModule.classList.toggle('hidden', name !== 'module');
+  viewDoc.classList.toggle('active', name === 'doc');
+  viewDoc.classList.toggle('hidden', name !== 'doc');
+}
+
+/* ── Open Module ─────────────────────────────────────────── */
+function openModule(id) {
+  const m = MODULES.find(x => x.id === id);
+  if (!m) return;
+  activeModuleId = id;
+
+  switchView('module');
+
+  const navBtn = document.querySelector(`.nav-item[data-id="${id}"]`);
+  if (navBtn) setActiveNav(navBtn);
+
+  mIcon.style.background = m.gradient;
+  mIcon.textContent = m.icon;
+  mTitle.textContent = m.name;
+  mDesc.textContent  = m.desc;
+  btnGenerate.style.background = m.gradient;
+
+  buildInputs(m);
+  clearOutput();
+}
+
+/* ── Build Inputs ────────────────────────────────────────── */
+function buildInputs(m) {
+  inputFields.innerHTML = '';
+  m.inputs.forEach(inp => {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+    const label = document.createElement('label');
+    label.textContent = inp.label;
+    label.setAttribute('for', `inp-${inp.id}`);
+    group.appendChild(label);
+
+    let el;
+    if (inp.type === 'select') {
+      el = document.createElement('select');
+      inp.opts.forEach(o => {
+        const opt = document.createElement('option');
+        opt.value = o; opt.textContent = o;
+        el.appendChild(opt);
+      });
+    } else if (inp.type === 'textarea') {
+      el = document.createElement('textarea');
+      el.placeholder = inp.ph;
+    } else {
+      el = document.createElement('input');
+      el.type = 'text';
+      el.placeholder = inp.ph;
+    }
+    el.id = `inp-${inp.id}`;
+    group.appendChild(el);
+    inputFields.appendChild(group);
+  });
+}
+
+/* ── Generate ────────────────────────────────────────────── */
+btnGenerate.onclick = generate;
+btnClear.onclick    = clearOutput;
+btnCopy.onclick     = copyOutput;
+
+async function generate() {
+  if (isGenerating) return;
+  const apiKey = localStorage.getItem('pm_api_key');
+  if (!apiKey) { settingsModal.classList.remove('hidden'); return; }
+
+  const m = MODULES.find(x => x.id === activeModuleId);
+  if (!m) return;
+
+  const values = {};
+  let valid = true;
+  m.inputs.forEach(inp => {
+    const el = document.getElementById(`inp-${inp.id}`);
+    values[inp.id] = el ? el.value.trim() : '';
+    if (!values[inp.id] && inp.type !== 'select') valid = false;
+  });
+  if (!valid) { alert('Please fill in all fields before generating.'); return; }
+
+  setGenerating(true);
+  clearOutput();
+  showOutputArea();
+  fullOutput = '';
+
+  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
+
+  try {
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: resp.statusText }));
+      throw new Error(err.error || resp.statusText);
+    }
+    const reader  = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullOutput += decoder.decode(value, { stream: true });
+      renderStreaming(fullOutput);
+    }
+    renderFinal(fullOutput);
+    markDone(m.id);
+  } catch (err) {
+    renderError(err.message);
+  } finally {
+    setGenerating(false);
+  }
+}
+
+function renderStreaming(text) {
+  outputContent.classList.remove('hidden');
+  outputPlaceholder.classList.add('hidden');
+  outputContent.style.whiteSpace = 'pre-wrap';
+  outputContent.innerHTML = escapeHtml(text) + '<span class="cursor"></span>';
+  outputContent.parentElement.scrollTop = outputContent.parentElement.scrollHeight;
+}
+
+function renderFinal(text) {
+  outputContent.style.whiteSpace = '';
+  outputContent.innerHTML = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
+  btnCopy.classList.remove('hidden');
+  btnClear.classList.remove('hidden');
+}
+
+function renderError(msg) {
+  outputContent.classList.remove('hidden');
+  outputPlaceholder.classList.add('hidden');
+  outputContent.style.whiteSpace = 'pre-wrap';
+  outputContent.innerHTML = `<span style="color:#ef4444">⚠ Error: ${escapeHtml(msg)}\n\nCheck your API key in Settings.</span>`;
+}
+
+function showOutputArea() {
+  outputContent.classList.remove('hidden');
+  outputPlaceholder.classList.add('hidden');
+  outputContent.innerHTML = '';
+}
+
+function clearOutput() {
+  outputContent.classList.add('hidden');
+  outputContent.innerHTML = '';
+  outputPlaceholder.classList.remove('hidden');
+  btnCopy.classList.add('hidden');
+  btnClear.classList.add('hidden');
+  fullOutput = '';
+}
+
+function setGenerating(state) {
+  isGenerating = state;
+  btnGenerate.disabled = state;
+  btnText.classList.toggle('hidden', state);
+  btnSpinner.classList.toggle('hidden', !state);
+}
+
+function copyOutput() {
+  if (!fullOutput) return;
+  navigator.clipboard.writeText(fullOutput).then(() => {
+    btnCopy.textContent = 'Copied!';
+    btnCopy.classList.add('copied');
+    setTimeout(() => { btnCopy.textContent = 'Copy'; btnCopy.classList.remove('copied'); }, 2000);
+  });
+}
+
+function markDone(id) {
+  completedIds.add(id);
+  localStorage.setItem('pm_done', JSON.stringify([...completedIds]));
+  document.querySelectorAll(`.nav-item[data-id="${id}"]`).forEach(b => b.classList.add('done'));
+  updateStats();
+  buildModuleGrid();
+}
+
+/* ── Doc View ────────────────────────────────────────────── */
+async function openDoc(type) {
+  switchView('doc');
+  const titles = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog' };
+  docTitle.textContent = titles[type] || type;
+  docLoader.classList.remove('hidden');
   docsBody.classList.add('hidden');
   docsBody.innerHTML = '';
-
   try {
     const res  = await fetch(`/api/content/${type}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     docsBody.innerHTML = window.marked ? marked.parse(data.content) : `<pre>${data.content}</pre>`;
-    docsLoader.classList.add('hidden');
+    docLoader.classList.add('hidden');
     docsBody.classList.remove('hidden');
   } catch (err) {
-    docsLoader.classList.add('hidden');
-    docsBody.innerHTML = `<p style="color:#ef4444">Failed to load content: ${err.message}</p>`;
+    docLoader.classList.add('hidden');
+    docsBody.innerHTML = `<p style="color:#ef4444">Failed to load: ${err.message}</p>`;
     docsBody.classList.remove('hidden');
   }
+}
+
+/* ── Util ────────────────────────────────────────────────── */
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ── Boot ────────────────────────────────────────────────── */
