@@ -4,7 +4,7 @@
 //|  Strategy: H4 trend filter + H1 EMA cross + RSI + MACD confirm  |
 //+------------------------------------------------------------------+
 #property copyright "TrendMaster EA"
-#property version   "1.10"
+#property version   "1.20"
 #property strict
 
 //--- Entry Inputs
@@ -32,6 +32,14 @@ input int    ATR_Period         = 14;         // ATR period
 input int    HigherTF           = PERIOD_H4; // Higher timeframe for trend filter
 input int    Slippage           = 3;          // Max slippage in points
 
+//--- Session Filter Inputs
+input bool   UseSessionFilter   = true;       // Only trade during allowed sessions
+input int    BrokerGMTOffset    = 2;          // Broker server GMT offset (2 winter / 3 summer)
+input bool   TradeLondon        = true;       // Trade London session (08:00–17:00 UTC)
+input bool   TradeNewYork       = true;       // Trade New York session (13:00–22:00 UTC)
+input bool   TradeAsian         = false;      // Trade Asian session (00:00–08:00 UTC)
+input bool   OverlapOnly        = false;      // Only trade London/NY overlap (13:00–17:00 UTC)
+
 //--- News Filter Inputs
 input bool   UseNewsFilter      = true;       // Enable news filter
 input int    NewsMinsBefore     = 30;         // Minutes to block BEFORE news event
@@ -45,7 +53,8 @@ datetime newsEvents[];
 int      newsEventCount = 0;
 datetime lastNewsLoad   = 0;
 
-#define NEWS_LABEL "TM_NewsStatus"
+#define NEWS_LABEL    "TM_NewsStatus"
+#define SESSION_LABEL "TM_SessionStatus"
 
 //+------------------------------------------------------------------+
 void OnTick()
@@ -58,11 +67,16 @@ void OnTick()
 
    ManageOpenTrades();
 
+   string session = GetCurrentSession();
+   UpdateSessionLabel(session);
+
    if (UseNewsFilter && IsNewsTime()) {
       UpdateNewsLabel(true);
       return;
    }
    UpdateNewsLabel(false);
+
+   if (UseSessionFilter && session == "CLOSED") return;
 
    if (CountOpenTrades() >= MaxTradesPerSymbol) return;
 
@@ -342,6 +356,61 @@ void CloseAllTrades()
 }
 
 //+------------------------------------------------------------------+
+//| Identify the current trading session based on UTC hour           |
+//| Returns: "OVERLAP", "LONDON", "NEW YORK", "ASIAN", or "CLOSED"  |
+//+------------------------------------------------------------------+
+string GetCurrentSession()
+{
+   datetime utcTime = TimeCurrent() - BrokerGMTOffset * 3600;
+   MqlDateTime dt;
+   TimeToStruct(utcTime, dt);
+   int h = dt.hour;
+
+   // Weekend — market closed
+   if (dt.day_of_week == 0 || dt.day_of_week == 6) return "CLOSED";
+
+   bool inLondon  = (h >= 8  && h < 17);
+   bool inNewYork = (h >= 13 && h < 22);
+   bool inAsian   = (h >= 0  && h <  8);
+   bool inOverlap = (h >= 13 && h < 17); // London + NY both open
+
+   if (OverlapOnly) {
+      if (!inOverlap) return "CLOSED";
+      return "OVERLAP";
+   }
+
+   if (inOverlap  && TradeLondon && TradeNewYork) return "OVERLAP";
+   if (inLondon   && TradeLondon)                 return "LONDON";
+   if (inNewYork  && TradeNewYork)                return "NEW YORK";
+   if (inAsian    && TradeAsian)                  return "ASIAN";
+   return "CLOSED";
+}
+
+//+------------------------------------------------------------------+
+//| On-chart session label with colour per session                   |
+//+------------------------------------------------------------------+
+void UpdateSessionLabel(string session)
+{
+   color clr;
+   if      (session == "OVERLAP")  clr = clrGold;
+   else if (session == "LONDON")   clr = clrDodgerBlue;
+   else if (session == "NEW YORK") clr = clrLimeGreen;
+   else if (session == "ASIAN")    clr = clrOrchid;
+   else                             clr = clrDimGray;
+
+   if (ObjectFind(0, SESSION_LABEL) < 0) {
+      ObjectCreate(0, SESSION_LABEL, OBJ_LABEL, 0, 0, 0);
+      ObjectSetInteger(0, SESSION_LABEL, OBJPROP_CORNER,    CORNER_TOP_RIGHT);
+      ObjectSetInteger(0, SESSION_LABEL, OBJPROP_XDISTANCE, 10);
+      ObjectSetInteger(0, SESSION_LABEL, OBJPROP_YDISTANCE, 38);
+      ObjectSetInteger(0, SESSION_LABEL, OBJPROP_FONTSIZE,  10);
+      ObjectSetString (0, SESSION_LABEL, OBJPROP_FONT,      "Arial Bold");
+   }
+   ObjectSetString (0, SESSION_LABEL, OBJPROP_TEXT,  "Session: " + session);
+   ObjectSetInteger(0, SESSION_LABEL, OBJPROP_COLOR, clr);
+}
+
+//+------------------------------------------------------------------+
 //| On-chart label: green "CLEAR" or red "NEWS BLOCKED"              |
 //+------------------------------------------------------------------+
 void UpdateNewsLabel(bool blocked)
@@ -364,17 +433,19 @@ void UpdateNewsLabel(bool blocked)
 //+------------------------------------------------------------------+
 int OnInit()
 {
-   Print("TrendMaster EA v1.10 loaded on ", Symbol());
+   Print("TrendMaster EA v1.20 loaded on ", Symbol());
    if (UseNewsFilter) {
       LoadNewsFile();
       UpdateNewsLabel(false);
    }
+   if (UseSessionFilter) UpdateSessionLabel(GetCurrentSession());
    return INIT_SUCCEEDED;
 }
 
 void OnDeinit(const int reason)
 {
    ObjectDelete(0, NEWS_LABEL);
+   ObjectDelete(0, SESSION_LABEL);
    Print("TrendMaster EA removed. Reason: ", reason);
 }
 //+------------------------------------------------------------------+
