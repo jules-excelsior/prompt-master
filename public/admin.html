@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>PromptMaster — AI Social Media Agency</title>
+  <title>Dashboard — PromptMaster</title>
   <link rel="stylesheet" href="admin.css"/>
 </head>
 <body>
@@ -16,17 +16,17 @@
       <div class="login-logo-text">PromptMaster</div>
     </div>
     <h1>Welcome Back</h1>
-    <p class="login-sub">Sign in to your AI Social Media Agency</p>
+    <p class="login-sub">Sign in to your AI Social Media Agency Dashboard</p>
     <div class="form-group">
       <label for="pw-input">Dashboard Password</label>
       <div class="pw-wrap">
         <input type="password" id="pw-input" placeholder="Enter password…" autocomplete="current-password"/>
-        <button class="icon-btn" id="toggle-pw" title="Show/hide">👁</button>
+        <button class="icon-btn" id="toggle-pw">👁</button>
       </div>
     </div>
     <p class="login-error hidden" id="login-error">Incorrect password. Try again.</p>
     <button class="btn-login" id="btn-login">Unlock Dashboard →</button>
-    <p class="login-hint">Default password: <code>admin2025</code></p>
+    <p class="login-hint">Default: <code>admin2025</code> &nbsp;|&nbsp; <a href="index.html" class="login-back">← Back to home</a></p>
   </div>
 </div>
 
@@ -65,20 +65,51 @@
   </div>
 </div>
 
+<!-- ── Doc Drawer (Workflow / Docs / Changelog) ───────────── -->
+<div id="doc-drawer" class="doc-drawer hidden">
+  <div class="drawer-header">
+    <h2 id="drawer-title">Workflow</h2>
+    <button class="icon-btn" id="close-drawer">✕</button>
+  </div>
+  <div class="drawer-loader hidden" id="drawer-loader">
+    <div class="loader-spin"></div><span>Loading…</span>
+  </div>
+  <div class="docs-body hidden" id="docs-body"></div>
+</div>
+<div id="drawer-overlay" class="drawer-overlay hidden"></div>
+
 <!-- ── Dashboard ──────────────────────────────────────────── -->
 <div id="dashboard" class="dashboard hidden">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-top">
-      <div class="brand">
-        <div class="brand-icon">⚡</div>
-        <div>
-          <div class="brand-name">PromptMaster</div>
-          <div class="brand-tag">AI Social Media Agency</div>
-        </div>
+  <!-- Top Header -->
+  <header class="dash-header">
+    <div class="dash-brand">
+      <div class="dash-brand-icon">⚡</div>
+      <div>
+        <div class="dash-brand-name">PromptMaster</div>
+        <div class="dash-brand-tag">AI Social Media Agency</div>
       </div>
+    </div>
+    <div class="dash-header-right">
+      <div class="api-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span id="status-label">No API key</span>
+      </div>
+      <div class="header-divider"></div>
+      <button class="header-doc-btn" data-doc="workflow">⚙ Workflow</button>
+      <button class="header-doc-btn" data-doc="documentation">📖 Docs</button>
+      <button class="header-doc-btn" data-doc="changelog">📋 Changelog</button>
+      <div class="header-divider"></div>
+      <button class="header-action-btn" id="open-settings">Settings</button>
+      <button class="header-action-btn danger" id="btn-logout">Logout</button>
+    </div>
+  </header>
 
+  <!-- Body: Sidebar + Main -->
+  <div class="dash-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
       <nav class="nav">
         <button class="nav-item active" data-view="overview">
           <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
@@ -86,134 +117,88 @@
 
         <div class="nav-section">AI MODULES</div>
 
-        <button class="nav-item" data-view="module" data-id="growth-strategy">
+        <button class="nav-item" data-view="module" data-id="growth-strategy" style="--mc:#4f9cf9">
           <span class="nav-icon">⚡</span><span class="nav-label">Strategy Commander</span><span class="nav-check">✓</span>
         </button>
-        <button class="nav-item" data-view="module" data-id="audience-psychology">
+        <button class="nav-item" data-view="module" data-id="audience-psychology" style="--mc:#a855f7">
           <span class="nav-icon">🧠</span><span class="nav-label">Psychology Decoder</span><span class="nav-check">✓</span>
         </button>
-        <button class="nav-item" data-view="module" data-id="viral-content">
+        <button class="nav-item" data-view="module" data-id="viral-content" style="--mc:#f97316">
           <span class="nav-icon">🚀</span><span class="nav-label">Content Idea Engine</span><span class="nav-check">✓</span>
         </button>
-        <button class="nav-item" data-view="module" data-id="hook-engineering">
+        <button class="nav-item" data-view="module" data-id="hook-engineering" style="--mc:#ef4444">
           <span class="nav-icon">🎯</span><span class="nav-label">Hook Engineering Lab</span><span class="nav-check">✓</span>
         </button>
-        <button class="nav-item" data-view="module" data-id="algorithm-strategy">
+        <button class="nav-item" data-view="module" data-id="algorithm-strategy" style="--mc:#22c55e">
           <span class="nav-icon">📡</span><span class="nav-label">Algorithm Briefing</span><span class="nav-check">✓</span>
         </button>
-        <button class="nav-item" data-view="module" data-id="content-repurposing">
+        <button class="nav-item" data-view="module" data-id="content-repurposing" style="--mc:#f5c842">
           <span class="nav-icon">♻️</span><span class="nav-label">Content Repurposing</span><span class="nav-check">✓</span>
         </button>
-
-        <div class="nav-section">DOC</div>
-
-        <button class="nav-item" data-view="doc" data-doc="workflow">
-          <span class="nav-icon">⚙</span><span class="nav-label">Workflow</span>
-        </button>
-        <button class="nav-item" data-view="doc" data-doc="documentation">
-          <span class="nav-icon">📖</span><span class="nav-label">Documentation</span>
-        </button>
-        <button class="nav-item" data-view="doc" data-doc="changelog">
-          <span class="nav-icon">📋</span><span class="nav-label">Changelog</span>
-        </button>
       </nav>
-    </div>
 
-    <div class="sidebar-bottom">
-      <div class="api-status" id="api-status">
-        <span class="status-dot" id="status-dot"></span>
-        <span id="status-label">No API key</span>
+      <div class="sidebar-bottom">
+        <button class="sidebar-action" id="open-settings-sb">⚙ Settings</button>
+        <a class="sidebar-action" href="index.html">← Home</a>
       </div>
-      <button class="sidebar-action" id="open-settings">⚙ Settings</button>
-      <button class="sidebar-action danger" id="btn-logout">🚪 Logout</button>
-    </div>
-  </aside>
+    </aside>
 
-  <!-- Main content -->
-  <main class="main">
+    <!-- Main -->
+    <main class="main">
 
-    <!-- ── Overview (Landing Page) ── -->
-    <div id="view-overview" class="view active">
-      <div class="overview-header">
-        <div>
-          <h1>Dashboard</h1>
-          <p class="overview-sub">Welcome to your AI Social Media Agency. Select a module below to start generating.</p>
-        </div>
-        <div class="header-right">
-          <div class="version-badge">v1.0.0</div>
-          <div class="doc-hint">Workflow &amp; docs → <strong>DOC</strong> in sidebar</div>
-        </div>
-      </div>
-
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="stat-num">6</div>
-          <div class="stat-label">AI Modules</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-done">0</div>
-          <div class="stat-label">Completed</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num">Live</div>
-          <div class="stat-label">Streaming</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-num" id="stat-model">Opus</div>
-          <div class="stat-label">Active Model</div>
-        </div>
-      </div>
-
-      <div class="module-grid" id="module-grid"></div>
-    </div>
-
-    <!-- ── Module View ── -->
-    <div id="view-module" class="view hidden">
-      <div class="module-header" id="module-header">
-        <div class="module-icon-lg" id="m-icon"></div>
-        <div>
-          <h1 class="module-title" id="m-title"></h1>
-          <p class="module-desc" id="m-desc"></p>
-        </div>
-      </div>
-      <div class="workspace">
-        <div class="input-col">
-          <div class="panel-label">Inputs</div>
-          <div id="input-fields"></div>
-          <button class="btn-generate" id="btn-generate">
-            <span id="btn-text">✨ Generate</span>
-            <span id="btn-spinner" class="spinner hidden"></span>
-          </button>
-          <button class="btn-clear hidden" id="btn-clear">Clear Output</button>
-        </div>
-        <div class="output-col">
-          <div class="output-topbar">
-            <span class="panel-label">Output</span>
-            <button class="small-btn hidden" id="btn-copy">Copy</button>
+      <!-- Overview / Dashboard Landing -->
+      <div id="view-overview" class="view active">
+        <div class="overview-header">
+          <div>
+            <h1>Dashboard</h1>
+            <p class="overview-sub">Select an AI module from the sidebar to start generating. Workflow, Docs &amp; Changelog are in the top right.</p>
           </div>
-          <div class="output-box" id="output-box">
-            <div class="output-placeholder" id="output-placeholder">
-              <div class="ph-icon">✨</div>
-              <p>Your AI-generated content will appear here</p>
+          <div class="overview-stats">
+            <div class="stat-pill"><span id="stat-done">0</span>/6 Completed</div>
+            <div class="stat-pill model-pill" id="model-pill">Opus 4.8</div>
+          </div>
+        </div>
+
+        <div class="module-grid" id="module-grid"></div>
+      </div>
+
+      <!-- Module View -->
+      <div id="view-module" class="view hidden">
+        <div class="module-header" id="module-header">
+          <div class="module-icon-lg" id="m-icon"></div>
+          <div>
+            <h1 class="module-title" id="m-title"></h1>
+            <p class="module-desc" id="m-desc"></p>
+          </div>
+        </div>
+        <div class="workspace">
+          <div class="input-col">
+            <div class="panel-label">Inputs</div>
+            <div id="input-fields"></div>
+            <button class="btn-generate" id="btn-generate">
+              <span id="btn-text">✨ Generate</span>
+              <span id="btn-spinner" class="spinner hidden"></span>
+            </button>
+            <button class="btn-clear hidden" id="btn-clear">Clear Output</button>
+          </div>
+          <div class="output-col">
+            <div class="output-topbar">
+              <span class="panel-label">Output</span>
+              <button class="small-btn hidden" id="btn-copy">Copy</button>
             </div>
-            <div class="output-content hidden" id="output-content"></div>
+            <div class="output-box" id="output-box">
+              <div class="output-placeholder" id="output-placeholder">
+                <div class="ph-icon">✨</div>
+                <p>Your AI-generated content will appear here</p>
+              </div>
+              <div class="output-content hidden" id="output-content"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ── Doc View ── -->
-    <div id="view-doc" class="view hidden">
-      <div class="doc-header" id="doc-header">
-        <h1 id="doc-title"></h1>
-      </div>
-      <div class="doc-loader hidden" id="doc-loader">
-        <div class="loader-spin"></div><span>Loading…</span>
-      </div>
-      <div class="docs-body hidden" id="docs-body"></div>
-    </div>
-
-  </main>
+    </main>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

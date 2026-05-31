@@ -14,7 +14,7 @@ const MODULES = [
       { id: 'goal',     label: 'Growth Goal',  type: 'text',   ph: 'e.g., reach 10K followers in 90 days' }
     ],
     system: 'You are an elite social media manager and growth strategist. Respond with richly structured markdown.',
-    prompt: (v) => `Act as an elite social media manager and growth strategist.\n\nNiche: ${v.niche}\nPlatform: ${v.platform}\nGrowth Goal: ${v.goal}\n\nDeliver a full growth strategy with sections:\n## Strategic Positioning\n## Core Content Pillars (5–7)\n## Posting Schedule & Cadence\n## Algorithm-Specific Engagement Tactics\n## KPIs & Success Metrics\n## 30-Day Action Plan (week by week)\n\nBe specific and actionable.`
+    prompt: (v) => `Act as an elite social media manager and growth strategist.\n\nNiche: ${v.niche}\nPlatform: ${v.platform}\nGrowth Goal: ${v.goal}\n\nDeliver a comprehensive growth strategy:\n## Strategic Positioning\n## Core Content Pillars (5–7)\n## Posting Schedule & Cadence\n## Algorithm-Specific Engagement Tactics\n## KPIs & Success Metrics\n## 30-Day Action Plan (week by week)`
   },
   {
     id: 'audience-psychology',
@@ -22,11 +22,9 @@ const MODULES = [
     icon: '🧠', color: '#a855f7',
     gradient: 'linear-gradient(135deg,#a855f7,#7c3aed)',
     desc: 'Deep audience analysis — desires, frustrations, emotional triggers, attention patterns & psychological motivations.',
-    inputs: [
-      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., online fitness coaching, B2B SaaS, crypto investing' }
-    ],
-    system: 'You are an expert audience psychologist and consumer behavior researcher. Use markdown with clear section headers.',
-    prompt: (v) => `Analyze the target audience for the "${v.niche}" niche deeply.\n\n## Core Demographics & Psychographics\n## Top 5 Desires & Aspirations\n## Top 5 Frustrations & Pain Points\n## Key Emotional Triggers\n## Attention Patterns & Scroll Behavior\n## Content Format Preferences\n## Psychological Motivations\n## Identity & Self-Perception Gap\n## Content Strategy Implications\n\nBe specific to "${v.niche}".`
+    inputs: [{ id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., online fitness coaching, B2B SaaS, crypto investing' }],
+    system: 'You are an expert audience psychologist. Use markdown with clear section headers.',
+    prompt: (v) => `Analyze the target audience for "${v.niche}" deeply.\n\n## Core Demographics & Psychographics\n## Top 5 Desires & Aspirations\n## Top 5 Frustrations & Pain Points\n## Key Emotional Triggers\n## Attention Patterns & Scroll Behavior\n## Content Format Preferences\n## Psychological Motivations\n## Identity & Self-Perception Gap\n## Content Strategy Implications`
   },
   {
     id: 'viral-content',
@@ -34,11 +32,9 @@ const MODULES = [
     icon: '🚀', color: '#f97316',
     gradient: 'linear-gradient(135deg,#f97316,#ea580c)',
     desc: 'Generate 30 highly engaging content ideas using curiosity triggers, emotional reactions & proven viral frameworks.',
-    inputs: [
-      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., productivity for entrepreneurs, vegan recipes, web design' }
-    ],
+    inputs: [{ id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., productivity for entrepreneurs, vegan recipes, web design' }],
     system: 'You are a viral content strategist. Generate specific, high-potential ideas in clear markdown sections.',
-    prompt: (v) => `Generate 30 highly engaging content ideas for the "${v.niche}" niche.\n\n## 🔍 Curiosity & Mystery (5 ideas)\n## 💥 Emotional Story & Transformation (5 ideas)\n## 🔥 Controversy & Hot Takes (5 ideas)\n## 😣 Pain Point Solutions (5 ideas)\n## ✅ Proof & Social Validation (5 ideas)\n## 📚 Education & Value Bombs (5 ideas)\n\nFor each idea: **Concept**, **Why it works**, **Hook line**. All specific to "${v.niche}".`
+    prompt: (v) => `Generate 30 highly engaging content ideas for "${v.niche}".\n\n## 🔍 Curiosity & Mystery (5 ideas)\n## 💥 Emotional Story & Transformation (5 ideas)\n## 🔥 Controversy & Hot Takes (5 ideas)\n## 😣 Pain Point Solutions (5 ideas)\n## ✅ Proof & Social Validation (5 ideas)\n## 📚 Education & Value Bombs (5 ideas)\n\nFor each: **Concept** | **Why it works** | **Hook line**`
   },
   {
     id: 'hook-engineering',
@@ -46,11 +42,9 @@ const MODULES = [
     icon: '🎯', color: '#ef4444',
     gradient: 'linear-gradient(135deg,#ef4444,#dc2626)',
     desc: 'Scroll-stopping opening hooks engineered to capture attention instantly using psychology & proven triggers.',
-    inputs: [
-      { id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., real estate investing, mindset coaching, AI tools' }
-    ],
-    system: 'You are a master copywriter and hook engineer. Write powerful, platform-ready hooks in clear markdown sections.',
-    prompt: (v) => `Generate 20 scroll-stopping hooks for the "${v.niche}" niche.\n\n## 🕳️ Curiosity Gap Hooks (4)\n## 🪞 Identity & Relatability Hooks (4)\n## 📊 Shocking Stat & Fact Hooks (3)\n## ⏰ Urgency & Stakes Hooks (3)\n## 🚫 Contrarian & Controversy Hooks (3)\n## 🔄 Transformation Hooks (3)\n\nFor each: write the **exact hook text** (copy-ready) + psychological trigger in parentheses. All specific to "${v.niche}".`
+    inputs: [{ id: 'niche', label: 'Your Niche', type: 'text', ph: 'e.g., real estate investing, mindset coaching, AI tools' }],
+    system: 'You are a master copywriter and hook engineer. Write powerful, copy-ready hooks in clear markdown sections.',
+    prompt: (v) => `Generate 20 scroll-stopping hooks for "${v.niche}".\n\n## 🕳️ Curiosity Gap Hooks (4)\n## 🪞 Identity & Relatability Hooks (4)\n## 📊 Shocking Stat & Fact Hooks (3)\n## ⏰ Urgency & Stakes Hooks (3)\n## 🚫 Contrarian & Controversy Hooks (3)\n## 🔄 Transformation Hooks (3)\n\nEach hook: **exact text** (copy-ready) + (psychological trigger)`
   },
   {
     id: 'algorithm-strategy',
@@ -59,11 +53,11 @@ const MODULES = [
     gradient: 'linear-gradient(135deg,#22c55e,#16a34a)',
     desc: 'Platform-specific algorithm playbook for maximum organic reach, distribution & visibility.',
     inputs: [
-      { id: 'platform', label: 'Platform',     type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
-      { id: 'niche',    label: 'Your Niche',   type: 'text',   ph: 'e.g., fashion, tech reviews, business coaching' }
+      { id: 'platform', label: 'Platform', type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
+      { id: 'niche',    label: 'Your Niche', type: 'text', ph: 'e.g., fashion, tech reviews, business coaching' }
     ],
     system: 'You are a platform algorithm expert. Deliver specific, actionable intelligence in markdown.',
-    prompt: (v) => `Algorithm intelligence briefing for ${v.platform} in the "${v.niche}" niche.\n\n## How the ${v.platform} Algorithm Works\n## Key Engagement Signals (ranked)\n## Optimal Content Structure & Format\n## Posting Strategy (timing, frequency)\n## Niche-Specific Tactics for "${v.niche}"\n## Engagement Loop Strategy\n## Reach Killers — What to Avoid\n## 30-Day Algorithm Reset Plan\n\nBe ${v.platform}-specific.`
+    prompt: (v) => `Algorithm intelligence briefing for ${v.platform} in "${v.niche}".\n\n## How the ${v.platform} Algorithm Works\n## Key Engagement Signals (ranked)\n## Optimal Content Structure & Format\n## Posting Strategy (timing, frequency)\n## Niche-Specific Tactics for "${v.niche}"\n## Engagement Loop Strategy\n## Reach Killers — What to Avoid\n## 30-Day Algorithm Reset Plan`
   },
   {
     id: 'content-repurposing',
@@ -71,11 +65,9 @@ const MODULES = [
     icon: '♻️', color: '#f5c842',
     gradient: 'linear-gradient(135deg,#f5c842,#d97706)',
     desc: 'Transform one content idea into 6+ platform-native formats for scalable, high-output content production.',
-    inputs: [
-      { id: 'content', label: 'Your Content Idea', type: 'textarea', ph: 'Paste your content idea, topic, script, or core message here…' }
-    ],
+    inputs: [{ id: 'content', label: 'Your Content Idea', type: 'textarea', ph: 'Paste your content idea, topic, script, or core message here…' }],
     system: 'You are a content repurposing strategist. Use markdown ## headers for each format.',
-    prompt: (v) => `Repurpose this content idea into 6 platform-specific formats:\n\n**Original Idea:**\n${v.content}\n\n## 1. Short-Form Video Script (TikTok/Reels/Shorts)\n## 2. Carousel Post (Instagram/LinkedIn)\n## 3. Long-Form Caption (Instagram/Facebook)\n## 4. Twitter/X Thread\n## 5. LinkedIn Post\n## 6. Engagement Bait Post\n\nEach format must be platform-native and copy-ready.`
+    prompt: (v) => `Repurpose this into 6 platform-specific formats:\n\n**Original Idea:**\n${v.content}\n\n## 1. Short-Form Video Script (TikTok/Reels/Shorts)\n## 2. Carousel Post (Instagram/LinkedIn)\n## 3. Long-Form Caption (Instagram/Facebook)\n## 4. Twitter/X Thread\n## 5. LinkedIn Post\n## 6. Engagement Bait Post\n\nEach format: platform-native and copy-ready.`
   }
 ];
 
@@ -86,46 +78,46 @@ let fullOutput     = '';
 let completedIds   = new Set(JSON.parse(localStorage.getItem('pm_done') || '[]'));
 
 /* ── DOM ─────────────────────────────────────────────────── */
-const loginScreen    = document.getElementById('login-screen');
-const dashboard      = document.getElementById('dashboard');
-const pwInput        = document.getElementById('pw-input');
-const loginError     = document.getElementById('login-error');
-const settingsModal  = document.getElementById('settings-modal');
-const apiKeyInput    = document.getElementById('api-key-input');
-const modelSelect    = document.getElementById('model-select');
-const savedMsg       = document.getElementById('saved-msg');
-const moduleGrid     = document.getElementById('module-grid');
-const viewOverview   = document.getElementById('view-overview');
-const viewModule     = document.getElementById('view-module');
-const viewDoc        = document.getElementById('view-doc');
-const mIcon          = document.getElementById('m-icon');
-const mTitle         = document.getElementById('m-title');
-const mDesc          = document.getElementById('m-desc');
-const inputFields    = document.getElementById('input-fields');
-const btnGenerate    = document.getElementById('btn-generate');
-const btnText        = document.getElementById('btn-text');
-const btnSpinner     = document.getElementById('btn-spinner');
-const btnClear       = document.getElementById('btn-clear');
-const btnCopy        = document.getElementById('btn-copy');
+const loginScreen   = document.getElementById('login-screen');
+const dashboard     = document.getElementById('dashboard');
+const pwInput       = document.getElementById('pw-input');
+const loginError    = document.getElementById('login-error');
+const settingsModal = document.getElementById('settings-modal');
+const apiKeyInput   = document.getElementById('api-key-input');
+const modelSelect   = document.getElementById('model-select');
+const savedMsg      = document.getElementById('saved-msg');
+const moduleGrid    = document.getElementById('module-grid');
+const viewOverview  = document.getElementById('view-overview');
+const viewModule    = document.getElementById('view-module');
+const mIcon         = document.getElementById('m-icon');
+const mTitle        = document.getElementById('m-title');
+const mDesc         = document.getElementById('m-desc');
+const inputFields   = document.getElementById('input-fields');
+const btnGenerate   = document.getElementById('btn-generate');
+const btnText       = document.getElementById('btn-text');
+const btnSpinner    = document.getElementById('btn-spinner');
+const btnClear      = document.getElementById('btn-clear');
+const btnCopy       = document.getElementById('btn-copy');
 const outputPlaceholder = document.getElementById('output-placeholder');
-const outputContent  = document.getElementById('output-content');
-const docTitle       = document.getElementById('doc-title');
-const docLoader      = document.getElementById('doc-loader');
-const docsBody       = document.getElementById('docs-body');
-const statusDot      = document.getElementById('status-dot');
-const statusLabel    = document.getElementById('status-label');
-const statDone       = document.getElementById('stat-done');
-const statModel      = document.getElementById('stat-model');
+const outputContent = document.getElementById('output-content');
+const statusDot     = document.getElementById('status-dot');
+const statusLabel   = document.getElementById('status-label');
+const statDone      = document.getElementById('stat-done');
+const modelPill     = document.getElementById('model-pill');
+const docDrawer     = document.getElementById('doc-drawer');
+const drawerOverlay = document.getElementById('drawer-overlay');
+const drawerTitle   = document.getElementById('drawer-title');
+const drawerLoader  = document.getElementById('drawer-loader');
+const docsBody      = document.getElementById('docs-body');
 
 /* ── Auth ────────────────────────────────────────────────── */
-function checkAuth() {
+(function checkAuth() {
   if (sessionStorage.getItem('pm_admin') === 'true') showDashboard();
-}
+})();
 
 document.getElementById('toggle-pw').onclick = () => {
   pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
 };
-
 document.getElementById('btn-login').onclick = login;
 pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
@@ -134,30 +126,14 @@ async function login() {
   if (!password) return;
   loginError.classList.add('hidden');
   try {
-    const res  = await fetch('/api/verify-admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
-    });
+    const res  = await fetch('/api/verify-admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
     const data = await res.json();
-    if (data.success) {
-      sessionStorage.setItem('pm_admin', 'true');
-      showDashboard();
-    } else {
-      loginError.classList.remove('hidden');
-      pwInput.value = '';
-      pwInput.focus();
-    }
-  } catch {
-    loginError.textContent = 'Connection error — is the server running?';
-    loginError.classList.remove('hidden');
-  }
+    if (data.success) { sessionStorage.setItem('pm_admin', 'true'); showDashboard(); }
+    else { loginError.classList.remove('hidden'); pwInput.value = ''; pwInput.focus(); }
+  } catch { loginError.textContent = 'Connection error — is the server running?'; loginError.classList.remove('hidden'); }
 }
 
-document.getElementById('btn-logout').onclick = () => {
-  sessionStorage.removeItem('pm_admin');
-  location.reload();
-};
+document.getElementById('btn-logout').onclick = () => { sessionStorage.removeItem('pm_admin'); location.reload(); };
 
 /* ── Show Dashboard ──────────────────────────────────────── */
 function showDashboard() {
@@ -172,7 +148,7 @@ function showDashboard() {
 /* ── Settings ────────────────────────────────────────────── */
 function loadSettings() {
   const key   = localStorage.getItem('pm_api_key') || '';
-  const model = localStorage.getItem('pm_model')   || 'claude-opus-4-8';
+  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
   apiKeyInput.value = key;
   modelSelect.value = model;
   updateApiStatus(!!key, model);
@@ -191,27 +167,26 @@ function saveSettings() {
 function updateApiStatus(hasKey, model) {
   statusDot.classList.toggle('on', hasKey);
   statusLabel.textContent = hasKey ? 'API key set' : 'No API key';
-  if (statModel) {
-    const name = (model || '').includes('opus') ? 'Opus' : (model || '').includes('sonnet') ? 'Sonnet' : 'Haiku';
-    statModel.textContent = name;
+  if (modelPill) {
+    const n = (model || '').includes('opus') ? 'Opus 4.8' : (model || '').includes('sonnet') ? 'Sonnet 4.6' : 'Haiku 4.5';
+    modelPill.textContent = n;
   }
 }
 
-document.getElementById('open-settings').onclick  = () => settingsModal.classList.remove('hidden');
+[document.getElementById('open-settings'), document.getElementById('open-settings-sb')].forEach(el => {
+  if (el) el.onclick = () => settingsModal.classList.remove('hidden');
+});
 document.getElementById('close-settings').onclick = () => settingsModal.classList.add('hidden');
 document.getElementById('save-settings').onclick  = saveSettings;
-document.getElementById('toggle-key').onclick = () => {
-  apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
-};
+document.getElementById('toggle-key').onclick = () => { apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password'; };
 settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
 
 /* ── Stats ───────────────────────────────────────────────── */
-function updateStats() {
-  if (statDone) statDone.textContent = completedIds.size;
-}
+function updateStats() { if (statDone) statDone.textContent = completedIds.size; }
 
-/* ── Module Grid (Overview) ──────────────────────────────── */
+/* ── Module Grid ─────────────────────────────────────────── */
 function buildModuleGrid() {
+  if (!moduleGrid) return;
   moduleGrid.innerHTML = '';
   MODULES.forEach(m => {
     const card = document.createElement('div');
@@ -219,12 +194,7 @@ function buildModuleGrid() {
     card.style.setProperty('--module-color', m.color);
     card.style.setProperty('--module-gradient', m.gradient);
     const done = completedIds.has(m.id);
-    card.innerHTML = `
-      <div class="mc-icon">${m.icon}</div>
-      <div class="mc-name">${m.name}</div>
-      <div class="mc-desc">${m.desc}</div>
-      ${done ? '<div class="mc-badge">✓ Completed</div>' : ''}
-    `;
+    card.innerHTML = `<div class="mc-icon">${m.icon}</div><div class="mc-name">${m.name}</div><div class="mc-desc">${m.desc}</div>${done ? '<div class="mc-done">✓ Completed</div>' : ''}`;
     card.onclick = () => openModule(m.id);
     moduleGrid.appendChild(card);
   });
@@ -235,14 +205,15 @@ function buildNavHandlers() {
   document.querySelectorAll('.nav-item').forEach(btn => {
     const view = btn.dataset.view;
     btn.onclick = () => {
-      if (view === 'overview')  switchView('overview');
-      if (view === 'module')    openModule(btn.dataset.id);
-      if (view === 'doc')       openDoc(btn.dataset.doc);
+      if (view === 'overview') switchView('overview');
+      if (view === 'module')   openModule(btn.dataset.id);
       setActiveNav(btn);
     };
-    if (view === 'module' && completedIds.has(btn.dataset.id)) {
-      btn.classList.add('done');
-    }
+    if (view === 'module' && completedIds.has(btn.dataset.id)) btn.classList.add('done');
+  });
+
+  document.querySelectorAll('.header-doc-btn').forEach(btn => {
+    btn.onclick = () => openDrawer(btn.dataset.doc);
   });
 }
 
@@ -253,12 +224,10 @@ function setActiveNav(target) {
 
 /* ── View Switcher ───────────────────────────────────────── */
 function switchView(name) {
+  viewOverview.style.display = name === 'overview' ? 'flex' : 'none';
+  viewModule.style.display   = name === 'module'   ? 'flex' : 'none';
   viewOverview.classList.toggle('active', name === 'overview');
-  viewOverview.classList.toggle('hidden', name !== 'overview');
-  viewModule.classList.toggle('active', name === 'module');
-  viewModule.classList.toggle('hidden', name !== 'module');
-  viewDoc.classList.toggle('active', name === 'doc');
-  viewDoc.classList.toggle('hidden', name !== 'doc');
+  viewModule.classList.toggle('active',   name === 'module');
 }
 
 /* ── Open Module ─────────────────────────────────────────── */
@@ -266,7 +235,6 @@ function openModule(id) {
   const m = MODULES.find(x => x.id === id);
   if (!m) return;
   activeModuleId = id;
-
   switchView('module');
 
   const navBtn = document.querySelector(`.nav-item[data-id="${id}"]`);
@@ -292,22 +260,14 @@ function buildInputs(m) {
     label.textContent = inp.label;
     label.setAttribute('for', `inp-${inp.id}`);
     group.appendChild(label);
-
     let el;
     if (inp.type === 'select') {
       el = document.createElement('select');
-      inp.opts.forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o; opt.textContent = o;
-        el.appendChild(opt);
-      });
+      inp.opts.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.textContent = o; el.appendChild(opt); });
     } else if (inp.type === 'textarea') {
-      el = document.createElement('textarea');
-      el.placeholder = inp.ph;
+      el = document.createElement('textarea'); el.placeholder = inp.ph;
     } else {
-      el = document.createElement('input');
-      el.type = 'text';
-      el.placeholder = inp.ph;
+      el = document.createElement('input'); el.type = 'text'; el.placeholder = inp.ph;
     }
     el.id = `inp-${inp.id}`;
     group.appendChild(el);
@@ -324,140 +284,87 @@ async function generate() {
   if (isGenerating) return;
   const apiKey = localStorage.getItem('pm_api_key');
   if (!apiKey) { settingsModal.classList.remove('hidden'); return; }
-
   const m = MODULES.find(x => x.id === activeModuleId);
   if (!m) return;
-
-  const values = {};
-  let valid = true;
-  m.inputs.forEach(inp => {
-    const el = document.getElementById(`inp-${inp.id}`);
-    values[inp.id] = el ? el.value.trim() : '';
-    if (!values[inp.id] && inp.type !== 'select') valid = false;
-  });
+  const values = {}; let valid = true;
+  m.inputs.forEach(inp => { const el = document.getElementById(`inp-${inp.id}`); values[inp.id] = el ? el.value.trim() : ''; if (!values[inp.id] && inp.type !== 'select') valid = false; });
   if (!valid) { alert('Please fill in all fields before generating.'); return; }
-
-  setGenerating(true);
-  clearOutput();
-  showOutputArea();
-  fullOutput = '';
-
+  setGenerating(true); clearOutput(); showOutputArea(); fullOutput = '';
   const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
-
   try {
-    const resp = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model })
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ error: resp.statusText }));
-      throw new Error(err.error || resp.statusText);
-    }
-    const reader  = resp.body.getReader();
-    const decoder = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      fullOutput += decoder.decode(value, { stream: true });
-      renderStreaming(fullOutput);
-    }
-    renderFinal(fullOutput);
-    markDone(m.id);
-  } catch (err) {
-    renderError(err.message);
-  } finally {
-    setGenerating(false);
-  }
+    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model }) });
+    if (!resp.ok) { const err = await resp.json().catch(() => ({ error: resp.statusText })); throw new Error(err.error || resp.statusText); }
+    const reader = resp.body.getReader(); const decoder = new TextDecoder();
+    while (true) { const { done, value } = await reader.read(); if (done) break; fullOutput += decoder.decode(value, { stream: true }); renderStreaming(fullOutput); }
+    renderFinal(fullOutput); markDone(m.id);
+  } catch (err) { renderError(err.message); }
+  finally { setGenerating(false); }
 }
 
 function renderStreaming(text) {
-  outputContent.classList.remove('hidden');
-  outputPlaceholder.classList.add('hidden');
+  outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden');
   outputContent.style.whiteSpace = 'pre-wrap';
   outputContent.innerHTML = escapeHtml(text) + '<span class="cursor"></span>';
   outputContent.parentElement.scrollTop = outputContent.parentElement.scrollHeight;
 }
-
 function renderFinal(text) {
   outputContent.style.whiteSpace = '';
   outputContent.innerHTML = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
-  btnCopy.classList.remove('hidden');
-  btnClear.classList.remove('hidden');
+  btnCopy.classList.remove('hidden'); btnClear.classList.remove('hidden');
 }
-
 function renderError(msg) {
-  outputContent.classList.remove('hidden');
-  outputPlaceholder.classList.add('hidden');
+  outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden');
   outputContent.style.whiteSpace = 'pre-wrap';
   outputContent.innerHTML = `<span style="color:#ef4444">⚠ Error: ${escapeHtml(msg)}\n\nCheck your API key in Settings.</span>`;
 }
-
-function showOutputArea() {
-  outputContent.classList.remove('hidden');
-  outputPlaceholder.classList.add('hidden');
-  outputContent.innerHTML = '';
-}
-
-function clearOutput() {
-  outputContent.classList.add('hidden');
-  outputContent.innerHTML = '';
-  outputPlaceholder.classList.remove('hidden');
-  btnCopy.classList.add('hidden');
-  btnClear.classList.add('hidden');
-  fullOutput = '';
-}
-
-function setGenerating(state) {
-  isGenerating = state;
-  btnGenerate.disabled = state;
-  btnText.classList.toggle('hidden', state);
-  btnSpinner.classList.toggle('hidden', !state);
-}
-
+function showOutputArea() { outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden'); outputContent.innerHTML = ''; }
+function clearOutput() { outputContent.classList.add('hidden'); outputContent.innerHTML = ''; outputPlaceholder.classList.remove('hidden'); btnCopy.classList.add('hidden'); btnClear.classList.add('hidden'); fullOutput = ''; }
+function setGenerating(state) { isGenerating = state; btnGenerate.disabled = state; btnText.classList.toggle('hidden', state); btnSpinner.classList.toggle('hidden', !state); }
 function copyOutput() {
   if (!fullOutput) return;
-  navigator.clipboard.writeText(fullOutput).then(() => {
-    btnCopy.textContent = 'Copied!';
-    btnCopy.classList.add('copied');
-    setTimeout(() => { btnCopy.textContent = 'Copy'; btnCopy.classList.remove('copied'); }, 2000);
-  });
+  navigator.clipboard.writeText(fullOutput).then(() => { btnCopy.textContent = 'Copied!'; btnCopy.classList.add('copied'); setTimeout(() => { btnCopy.textContent = 'Copy'; btnCopy.classList.remove('copied'); }, 2000); });
 }
-
 function markDone(id) {
-  completedIds.add(id);
-  localStorage.setItem('pm_done', JSON.stringify([...completedIds]));
+  completedIds.add(id); localStorage.setItem('pm_done', JSON.stringify([...completedIds]));
   document.querySelectorAll(`.nav-item[data-id="${id}"]`).forEach(b => b.classList.add('done'));
-  updateStats();
-  buildModuleGrid();
+  updateStats(); buildModuleGrid();
 }
 
-/* ── Doc View ────────────────────────────────────────────── */
-async function openDoc(type) {
-  switchView('doc');
-  const titles = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog' };
-  docTitle.textContent = titles[type] || type;
-  docLoader.classList.remove('hidden');
+/* ── Doc Drawer ──────────────────────────────────────────── */
+const DOC_TITLES = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog' };
+
+async function openDrawer(type) {
+  drawerTitle.textContent = DOC_TITLES[type] || type;
+  drawerLoader.classList.remove('hidden');
   docsBody.classList.add('hidden');
   docsBody.innerHTML = '';
+  docDrawer.classList.remove('hidden');
+  drawerOverlay.classList.remove('hidden');
+
   try {
     const res  = await fetch(`/api/content/${type}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     docsBody.innerHTML = window.marked ? marked.parse(data.content) : `<pre>${data.content}</pre>`;
-    docLoader.classList.add('hidden');
+    drawerLoader.classList.add('hidden');
     docsBody.classList.remove('hidden');
   } catch (err) {
-    docLoader.classList.add('hidden');
+    drawerLoader.classList.add('hidden');
     docsBody.innerHTML = `<p style="color:#ef4444">Failed to load: ${err.message}</p>`;
     docsBody.classList.remove('hidden');
   }
 }
 
+function closeDrawer() {
+  docDrawer.classList.add('hidden');
+  drawerOverlay.classList.add('hidden');
+}
+
+document.getElementById('close-drawer').onclick = closeDrawer;
+drawerOverlay.onclick = closeDrawer;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+
 /* ── Util ────────────────────────────────────────────────── */
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
-/* ── Boot ────────────────────────────────────────────────── */
-checkAuth();
