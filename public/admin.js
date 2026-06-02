@@ -97,6 +97,64 @@ const MODULES = [
     ],
     system: 'You are a hashtag research specialist and social media SEO expert. Provide specific, data-driven hashtag and discoverability strategies in structured markdown.',
     prompt: (v) => `Create a complete hashtag and SEO strategy for a ${v.niche} creator posting ${v.contentType} on ${v.platform}.\n\n## Strategy Overview\n## Tier 1 — Mega Hashtags (1M+ posts) — Use sparingly (2–3)\n## Tier 2 — Large Hashtags (100K–1M posts) — Core reach (5–7)\n## Tier 3 — Medium Hashtags (10K–100K posts) — Sweet spot (8–10)\n## Tier 4 — Niche Hashtags (1K–10K posts) — High conversion (5–7)\n## Branded & Community Hashtags\n## 4-Week Rotation Schedule (vary sets to avoid shadowban)\n## Platform-Specific SEO Tips for ${v.platform}\n## Caption & Bio SEO Keywords\n## What to Avoid (shadowban triggers, banned tags)\n\nInclude 30–40 specific example hashtags throughout.`
+  },
+  {
+    id: 'bio-optimizer',
+    name: 'Bio & Profile Optimizer',
+    icon: '🪪', color: '#ec4899',
+    gradient: 'linear-gradient(135deg,#ec4899,#be185d)',
+    desc: 'Craft an irresistible social media bio that converts profile visitors into followers — optimized for your platform, niche, and growth goals.',
+    inputs: [
+      { id: 'niche',    label: 'Your Niche / Profession', type: 'text',   ph: 'e.g., fitness coach, SaaS founder, travel photographer' },
+      { id: 'platform', label: 'Platform',                 type: 'select', opts: ['Instagram','TikTok','LinkedIn','Twitter/X','YouTube','Pinterest','Threads'] },
+      { id: 'audience', label: 'Target Audience',          type: 'text',   ph: 'e.g., busy moms who want to lose weight, early-stage startup founders' },
+      { id: 'goal',     label: 'Profile Goal',             type: 'text',   ph: 'e.g., get DMs, drive link-in-bio clicks, build authority' }
+    ],
+    system: 'You are an expert personal brand strategist and conversion copywriter. Write compelling, platform-native bios with structured markdown.',
+    prompt: (v) => `Create an optimized ${v.platform} bio and profile strategy for a ${v.niche} targeting ${v.audience}. Goal: ${v.goal}.\n\n## Bio Analysis Framework\n## 5 Bio Variations (from punchy to detailed)\nFor each: write the full bio text, then explain the psychological angle and what makes it work.\n\n## Keyword Optimization\nList the most important keywords to include for ${v.platform} SEO discoverability.\n\n## Profile Name & Username Strategy\nRecommendations for display name and handle optimization.\n\n## Link-in-Bio Strategy\nWhat to link to and how to frame the CTA in the bio.\n\n## Highlights / Featured Sections\nFor platforms that support it: what to pin, feature, or highlight.\n\n## Profile Photo & Banner Tips\nVisual identity recommendations for the ${v.niche} niche.\n\n## Profile Audit Checklist\n10-point checklist to ensure the full profile is conversion-optimized.`
+  },
+  {
+    id: 'competitor-analysis',
+    name: 'Competitor Analysis Module',
+    icon: '🔍', color: '#14b8a6',
+    gradient: 'linear-gradient(135deg,#14b8a6,#0d9488)',
+    desc: 'Deep competitive intelligence report — analyze what top competitors are doing right, find gaps to exploit, and extract a winning differentiation strategy.',
+    inputs: [
+      { id: 'niche',       label: 'Your Niche',          type: 'text',   ph: 'e.g., online fitness coaching, B2B SaaS, personal finance' },
+      { id: 'platform',    label: 'Platform',             type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
+      { id: 'competitors', label: 'Competitor Names / Handles', type: 'text', ph: 'e.g., @hubspot, @garyvee, Tony Robbins — list 2–4' }
+    ],
+    system: 'You are a competitive intelligence analyst and social media strategist. Deliver sharp, actionable competitor breakdowns in structured markdown.',
+    prompt: (v) => `Conduct a deep competitor analysis for the ${v.niche} niche on ${v.platform}.\n\nCompetitors to analyze: ${v.competitors}\n\n## Competitive Landscape Overview\nHow this niche is structured on ${v.platform} — key players, audience size ranges, content volume.\n\n## Individual Competitor Breakdown\nFor each competitor listed:\n- **Positioning & Unique Angle** — what they stand for\n- **Content Strategy** — formats, frequency, themes\n- **Engagement Tactics** — what drives comments/shares\n- **Strengths** — what they do exceptionally well\n- **Weaknesses / Gaps** — what they're missing\n\n## Content Gap Analysis\nTopic areas and formats that are underserved in this niche.\n\n## Differentiation Strategy\n5 concrete ways to position differently and stand out from these competitors.\n\n## Steal & Improve\n3 tactics from competitors worth adapting (and how to do it better).\n\n## Your Competitive Moat\nHow to build a defensible content brand that's hard to replicate.\n\n## 30-Day Counter-Positioning Plan\nFirst month of content moves to establish differentiated positioning.`
+  },
+  {
+    id: 'caption-rewriter',
+    name: 'Caption Rewriter',
+    icon: '✍️', color: '#f43f5e',
+    gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)',
+    desc: 'Instantly rewrite any caption into 5 different tones — professional, casual, funny, inspirational, and bold — all optimized for maximum engagement.',
+    inputs: [
+      { id: 'caption',  label: 'Original Caption',  type: 'textarea', ph: 'Paste your existing caption here — or describe the post idea…' },
+      { id: 'platform', label: 'Platform',           type: 'select',   opts: ['Instagram','TikTok','LinkedIn','Twitter/X','Facebook','Threads','YouTube'] },
+      { id: 'niche',    label: 'Your Niche',         type: 'text',     ph: 'e.g., fitness coaching, real estate, food blogging' }
+    ],
+    system: 'You are a master copywriter who specializes in social media captions. Rewrite captions in multiple distinct tones with structured markdown.',
+    prompt: (v) => `Rewrite this ${v.platform} caption for a ${v.niche} account in 5 distinct tones:\n\n**Original:**\n${v.caption}\n\nFor each rewrite:\n- Write the full caption (platform-native length for ${v.platform})\n- Include relevant emojis where natural\n- Add a CTA at the end\n- Note: [tone] + [psychological hook used]\n\n## ✍️ Version 1 — Professional & Authoritative\n## 😄 Version 2 — Casual & Conversational\n## 😂 Version 3 — Funny & Relatable\n## 🔥 Version 4 — Inspirational & Motivational\n## ⚡ Version 5 — Bold & Provocative\n\n## Recommended Hashtags\n15 targeted hashtags for this post in the ${v.niche} niche.\n\n## Best Version Recommendation\nWhich version to use and why, based on ${v.platform} engagement patterns.`
+  },
+  {
+    id: 'dm-outreach',
+    name: 'DM / Outreach Script Generator',
+    icon: '💬', color: '#3b82f6',
+    gradient: 'linear-gradient(135deg,#3b82f6,#1d4ed8)',
+    desc: 'Generate high-converting DM and outreach scripts for collaborations, sales, networking, and community building — personalized and non-spammy.',
+    inputs: [
+      { id: 'purpose',  label: 'Outreach Purpose',   type: 'select', opts: ['Collaboration / Collab Post','Sales / Offer Introduction','Podcast / Interview Request','Networking / Build Relationship','Brand Partnership Pitch','Influencer Outreach','Community Invitation','Follow-Up Message'] },
+      { id: 'niche',    label: 'Your Niche',          type: 'text',   ph: 'e.g., fitness coaching, SaaS, real estate investing' },
+      { id: 'audience', label: 'Who You\'re DMing',   type: 'text',   ph: 'e.g., fitness influencers with 10K–100K followers, local business owners' },
+      { id: 'offer',    label: 'Your Value / Offer',  type: 'text',   ph: 'e.g., free strategy call, revenue share collab, guest post on my 50K newsletter' }
+    ],
+    system: 'You are a direct response copywriter and outreach specialist. Write genuine, high-converting DM scripts that feel human and personal.',
+    prompt: (v) => `Create a complete ${v.purpose} DM outreach script pack for a ${v.niche} creator reaching out to ${v.audience}.\n\nValue/Offer: ${v.offer}\n\n## Outreach Strategy\nBrief note on the psychology of this outreach type and why the approach works.\n\n## Script 1 — Cold Outreach (First Contact)\nFull DM script. Warm, specific, non-salesy. Under 150 words.\n\n## Script 2 — Warm Outreach (After Engaging Their Content)\nFull DM script referencing something specific about their content. Under 120 words.\n\n## Script 3 — Direct & Bold (For High-Volume Outreach)\nFull DM script. Get to the point fast. Under 80 words.\n\n## Follow-Up Script (No Reply After 5–7 Days)\nFull follow-up DM. Adds value, not desperation. Under 60 words.\n\n## Response Handling Scripts\n- If they say "not interested"\n- If they ask for more info\n- If they leave you on read\n\n## Personalization Variables\nList of [brackets] in the scripts to customize per recipient.\n\n## Outreach Sequence\nRecommended timing and order for a 3-touch outreach sequence.`
   }
 ];
 
@@ -143,6 +201,7 @@ const savedMsg      = document.getElementById('saved-msg');
 const moduleGrid    = document.getElementById('module-grid');
 const viewOverview  = document.getElementById('view-overview');
 const viewModule    = document.getElementById('view-module');
+const viewSaved     = document.getElementById('view-saved');
 const viewUsers     = document.getElementById('view-users');
 const mIcon         = document.getElementById('m-icon');
 const mTitle        = document.getElementById('m-title');
@@ -266,6 +325,7 @@ async function showDashboard() {
   buildNavHandlers();
   updateStats();
   loadUsageStatus();
+  updateSavedCount();
 }
 
 /* ── Usage status (per-user daily counter) ───────────────── */
@@ -511,6 +571,7 @@ function buildNavHandlers() {
     btn.onclick = () => {
       if (view === 'overview') switchView('overview');
       else if (view === 'module') openModule(btn.dataset.id);
+      else if (view === 'saved') openSavedView();
       else if (view === 'users' && isAdmin()) openUsersView();
       setActiveNav(btn);
     };
@@ -531,6 +592,7 @@ function setActiveNav(target) {
 function switchView(name) {
   viewOverview.classList.toggle('active', name === 'overview');
   viewModule.classList.toggle('active',   name === 'module');
+  if (viewSaved) viewSaved.classList.toggle('active', name === 'saved');
   if (viewUsers) viewUsers.classList.toggle('active', name === 'users');
 }
 
@@ -580,10 +642,12 @@ function buildInputs(m) {
 }
 
 /* ── Generate ────────────────────────────────────────────── */
+const btnSave = document.getElementById('btn-save');
 btnGenerate.onclick = generate;
 btnClear.onclick    = clearOutput;
 btnCopy.onclick     = copyOutput;
 if (btnDownload) btnDownload.onclick = downloadOutput;
+if (btnSave)     btnSave.onclick     = saveSession;
 
 async function generate() {
   if (isGenerating) return;
@@ -630,6 +694,7 @@ function renderFinal(text) {
   outputContent.innerHTML = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
   btnCopy.classList.remove('hidden');
   if (btnDownload) btnDownload.classList.remove('hidden');
+  if (btnSave)     btnSave.classList.remove('hidden');
   btnClear.classList.remove('hidden');
 }
 function renderError(msg) {
@@ -638,7 +703,7 @@ function renderError(msg) {
   outputContent.innerHTML = `<span style="color:#ef4444">⚠ Error: ${escapeHtml(msg)}\n\nCheck your API key in Settings.</span>`;
 }
 function showOutputArea() { outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden'); outputContent.innerHTML = ''; }
-function clearOutput() { outputContent.classList.add('hidden'); outputContent.innerHTML = ''; outputPlaceholder.classList.remove('hidden'); btnCopy.classList.add('hidden'); if (btnDownload) btnDownload.classList.add('hidden'); btnClear.classList.add('hidden'); fullOutput = ''; }
+function clearOutput() { outputContent.classList.add('hidden'); outputContent.innerHTML = ''; outputPlaceholder.classList.remove('hidden'); btnCopy.classList.add('hidden'); if (btnDownload) btnDownload.classList.add('hidden'); if (btnSave) btnSave.classList.add('hidden'); btnClear.classList.add('hidden'); fullOutput = ''; }
 function setGenerating(state) { isGenerating = state; btnGenerate.disabled = state; btnText.classList.toggle('hidden', state); btnSpinner.classList.toggle('hidden', !state); }
 function copyOutput() {
   if (!fullOutput) return;
@@ -658,6 +723,104 @@ function markDone(id) {
   completedIds.add(id); localStorage.setItem('pm_done', JSON.stringify([...completedIds]));
   document.querySelectorAll(`.nav-item[data-id="${id}"]`).forEach(b => b.classList.add('done'));
   updateStats(); buildModuleGrid();
+}
+
+/* ── Saved Sessions ──────────────────────────────────────── */
+function getSessions() { return JSON.parse(localStorage.getItem('pm_sessions') || '[]'); }
+function saveSessions(s) { localStorage.setItem('pm_sessions', JSON.stringify(s)); }
+
+function updateSavedCount() {
+  const count  = getSessions().length;
+  const badge  = document.getElementById('nav-saved-count');
+  const statEl = document.getElementById('stat-saved-count');
+  if (badge)  badge.textContent  = count > 0 ? count : '';
+  if (statEl) statEl.textContent = count;
+}
+
+function saveSession() {
+  if (!fullOutput) return;
+  const m = MODULES.find(x => x.id === activeModuleId);
+  const defaultName = m ? `${m.name} — ${new Date().toLocaleDateString()}` : 'Saved Output';
+  const name = prompt('Name this session:', defaultName);
+  if (name === null) return;
+  const sessions = getSessions();
+  sessions.unshift({
+    id: Date.now().toString(),
+    moduleId:   activeModuleId,
+    moduleName: m ? m.name  : 'Output',
+    moduleIcon: m ? m.icon  : '✨',
+    moduleGrad: m ? m.gradient : 'linear-gradient(135deg,#4f9cf9,#1e6fd4)',
+    name:    name.trim() || defaultName,
+    content: fullOutput,
+    savedAt: new Date().toISOString()
+  });
+  saveSessions(sessions);
+  updateSavedCount();
+  if (btnSave) { btnSave.textContent = '✓ Saved!'; setTimeout(() => { btnSave.textContent = '💾 Save'; }, 2000); }
+}
+
+function openSavedView() {
+  switchView('saved');
+  updateSavedCount();
+  const sessions = getSessions();
+  const listEl   = document.getElementById('saved-sessions-list');
+  if (!listEl) return;
+
+  if (sessions.length === 0) {
+    listEl.innerHTML = `
+      <div class="saved-empty">
+        <div class="se-icon">💾</div>
+        <h3>No saved sessions yet</h3>
+        <p>Generate output in any module and click "💾 Save" to store it here.</p>
+      </div>`;
+    return;
+  }
+
+  listEl.innerHTML = sessions.map(s => `
+    <div class="saved-card" data-id="${escapeHtml(s.id)}">
+      <div class="sc-icon" style="background:${escapeHtml(s.moduleGrad || '#4f9cf9')}">${escapeHtml(s.moduleIcon || '✨')}</div>
+      <div class="sc-body">
+        <div class="sc-name">${escapeHtml(s.name)}</div>
+        <div class="sc-meta">${escapeHtml(s.moduleName)} · ${new Date(s.savedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })}</div>
+        <div class="sc-preview">${escapeHtml(s.content.slice(0, 180))}…</div>
+      </div>
+      <div class="sc-actions">
+        <button class="sc-view-btn" data-id="${escapeHtml(s.id)}">View</button>
+        <button class="sc-del-btn" data-id="${escapeHtml(s.id)}" title="Delete">✕</button>
+      </div>
+    </div>`).join('');
+
+  listEl.querySelectorAll('.sc-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => viewSavedSession(btn.dataset.id));
+  });
+  listEl.querySelectorAll('.sc-del-btn').forEach(btn => {
+    btn.addEventListener('click', () => deleteSavedSession(btn.dataset.id));
+  });
+}
+
+function viewSavedSession(id) {
+  const s = getSessions().find(x => x.id === id);
+  if (!s) return;
+  activeModuleId = s.moduleId;
+  const m = MODULES.find(x => x.id === s.moduleId);
+  if (m) {
+    mIcon.style.background = m.gradient;
+    mIcon.textContent = m.icon;
+    mTitle.textContent = m.name;
+    mDesc.textContent  = m.desc;
+    btnGenerate.style.background = m.gradient;
+    buildInputs(m);
+  }
+  fullOutput = s.content;
+  switchView('module');
+  showOutputArea();
+  renderFinal(s.content);
+}
+
+function deleteSavedSession(id) {
+  if (!confirm('Delete this saved session?')) return;
+  saveSessions(getSessions().filter(x => x.id !== id));
+  openSavedView();
 }
 
 /* ── Users View ──────────────────────────────────────────── */

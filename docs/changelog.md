@@ -5,6 +5,55 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.6.0] — 2026-06-02
+
+### 🚀 4 New Modules + Save Sessions Library
+
+#### Added — Module 9: Bio & Profile Optimizer
+- Inputs: Niche/Profession, Platform, Target Audience, Profile Goal
+- Output: 5 bio variations (each with psychological angle), keyword optimization, profile name/username strategy, link-in-bio strategy, highlights recommendations, profile photo tips, 10-point conversion checklist
+
+#### Added — Module 10: Competitor Analysis Module
+- Inputs: Niche, Platform, Competitor names/handles (2–4)
+- Output: Competitive landscape overview, individual competitor breakdowns (positioning, content strategy, strengths, weaknesses), content gap analysis, differentiation strategy, steal-and-improve tactics, 30-day counter-positioning plan
+
+#### Added — Module 11: Caption Rewriter
+- Inputs: Original caption, Platform, Niche
+- Output: 5 caption rewrites in distinct tones (Professional, Casual, Funny, Inspirational, Bold), each with emojis, CTA, and hook explanation; 15 targeted hashtags; best version recommendation
+
+#### Added — Module 12: DM / Outreach Script Generator
+- Inputs: Outreach Purpose (8 options), Niche, Who You're DMing, Your Value/Offer
+- Output: Outreach strategy note, 3 script variants (cold, warm, bold), follow-up script, response handling scripts, personalization variables, 3-touch sequence timing
+
+#### Added — Save Sessions Library
+- "💾 Save" button appears in the output toolbar after every successful generation
+- Clicking prompts for a session name (pre-filled with module name + date)
+- Sessions stored in `localStorage` — no server required
+- New **💾 Saved Sessions** view in sidebar (under LIBRARY section)
+- Session cards show: module icon, session name, module name, date, content preview
+- "View" button opens the saved content in the module view with full markdown rendering
+- Delete button with confirmation removes individual sessions
+- Session badge on the sidebar nav item shows count
+
+#### Changed — Dashboard
+- Module completion counter updated from 0/8 to 0/12
+
+#### Changed — Landing Page
+- Hero stat: "8 AI Modules" → "12 AI Modules"
+- Hero subtitle updated to list all 12 module types
+- Modules grid: 4 new module cards added (09–12)
+- Signup perks: "6 AI-powered modules" → "12 AI-powered modules"
+- Signup form subtitle updated to reference 12 modules
+
+#### Changed — Roadmap (items completed)
+- ✅ Bio & Profile Optimizer *(v1.6.0)*
+- ✅ Competitor Analysis Module *(v1.6.0)*
+- ✅ Caption Rewriter *(v1.6.0)*
+- ✅ DM / Outreach Script Generator *(v1.6.0)*
+- ✅ Save and name output sessions *(v1.6.0)*
+
+---
+
 ## [1.5.0] — 2026-06-02
 
 ### 🛡️ API Abuse Controls & Per-User Daily Limits
@@ -274,13 +323,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Future Modules
 - [x] Content Calendar Generator *(v1.4.0)*
 - [x] Hashtag & SEO Strategy *(v1.4.0)*
-- [ ] Bio & Profile Optimizer
-- [ ] Competitor Analysis Module
-- [ ] Caption Rewriter (tone variations)
-- [ ] DM / Outreach Script Generator
+- [x] Bio & Profile Optimizer *(v1.6.0)*
+- [x] Competitor Analysis Module *(v1.6.0)*
+- [x] Caption Rewriter (tone variations) *(v1.6.0)*
+- [x] DM / Outreach Script Generator *(v1.6.0)*
 
 ### Platform Enhancements
 - [x] API abuse controls with per-user daily limits *(v1.5.0)*
+- [x] Save and name output sessions *(v1.6.0)*
 - [ ] User dashboard with saved history
 - [ ] Team collaboration workspace
 - [ ] Email notifications for new sign-ups (admin)

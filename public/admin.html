@@ -231,6 +231,25 @@
         <button class="nav-item" data-view="module" data-id="hashtag-strategy" style="--mc:#8b5cf6">
           <span class="nav-icon">🏷️</span><span class="nav-label">Hashtag Strategy</span><span class="nav-check">✓</span>
         </button>
+        <button class="nav-item" data-view="module" data-id="bio-optimizer" style="--mc:#ec4899">
+          <span class="nav-icon">🪪</span><span class="nav-label">Bio Optimizer</span><span class="nav-check">✓</span>
+        </button>
+        <button class="nav-item" data-view="module" data-id="competitor-analysis" style="--mc:#14b8a6">
+          <span class="nav-icon">🔍</span><span class="nav-label">Competitor Analysis</span><span class="nav-check">✓</span>
+        </button>
+        <button class="nav-item" data-view="module" data-id="caption-rewriter" style="--mc:#f43f5e">
+          <span class="nav-icon">✍️</span><span class="nav-label">Caption Rewriter</span><span class="nav-check">✓</span>
+        </button>
+        <button class="nav-item" data-view="module" data-id="dm-outreach" style="--mc:#3b82f6">
+          <span class="nav-icon">💬</span><span class="nav-label">DM / Outreach</span><span class="nav-check">✓</span>
+        </button>
+
+        <!-- Library section -->
+        <div class="nav-section">LIBRARY</div>
+        <button class="nav-item" data-view="saved" style="--mc:#f5c842">
+          <span class="nav-icon">💾</span><span class="nav-label">Saved Sessions</span>
+          <span class="nav-badge" id="nav-saved-count"></span>
+        </button>
 
         <!-- Admin-only section -->
         <div class="nav-section admin-only">ADMIN</div>
@@ -257,7 +276,7 @@
             <p class="overview-sub">Select an AI module from the sidebar to start generating. Workflow, Docs &amp; Changelog are in the top right.</p>
           </div>
           <div class="overview-stats">
-            <div class="stat-pill"><span id="stat-done">0</span>/8 Completed</div>
+            <div class="stat-pill"><span id="stat-done">0</span>/12 Completed</div>
             <div class="stat-pill usage-pill" id="usage-pill">
               <span id="stat-usage-today">0</span>/<span id="stat-usage-limit">20</span> today
             </div>
@@ -291,6 +310,7 @@
               <span class="panel-label">Output</span>
               <button class="small-btn hidden" id="btn-copy">Copy</button>
               <button class="small-btn hidden" id="btn-download">↓ Download</button>
+              <button class="small-btn hidden" id="btn-save">💾 Save</button>
             </div>
             <div class="output-box" id="output-box">
               <div class="output-placeholder" id="output-placeholder">
@@ -301,6 +321,20 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Saved Sessions View -->
+      <div id="view-saved" class="view">
+        <div class="overview-header">
+          <div>
+            <h1>Saved Sessions</h1>
+            <p class="overview-sub">Your saved AI-generated outputs. Click any session to view the full content.</p>
+          </div>
+          <div class="overview-stats">
+            <div class="stat-pill"><span id="stat-saved-count">0</span> Saved</div>
+          </div>
+        </div>
+        <div id="saved-sessions-list"></div>
       </div>
 
       <!-- Users View (admin only) -->
