@@ -5,6 +5,60 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.5.0] — 2026-06-02
+
+### 🛡️ API Abuse Controls & Per-User Daily Limits
+
+#### Added — Daily Generation Limit Per User
+- Each registered user is limited to a configurable number of AI generations per day (default: 20)
+- Limit resets at midnight (server time)
+- Usage tracked server-side in `data/usage.json` — keyed by email + date
+- Admins are exempt from limits
+
+#### Added — Admin: Pause / Resume All Generations
+- One-click "Pause All" button in Settings → API Usage Controls
+- Pausing blocks all AI generation immediately for every user
+- Visual indicator: ⏸ Generations Paused / ✅ Generations Active
+- State persisted in `data/limits.json`
+
+#### Added — Admin: Configurable Daily Limit
+- Numeric input in Settings → API Usage Controls to set the daily limit per user
+- Range: 1–500 generations/day
+- Takes effect immediately — no restart needed
+- "Save" button with ✓ confirmation feedback
+
+#### Added — Admin: Usage Dashboard in Settings
+- Shows today's total generation count across all users
+- Per-user breakdown: email, today's count, all-time total
+- Top 10 users by today's usage listed in the modal
+
+#### Added — Usage Pill on Dashboard
+- Live counter in the overview stats bar: "X/Y today"
+- Turns red when the daily limit is reached
+- Refreshed on dashboard load and incremented after each successful generation
+
+#### Added — `/api/usage` endpoint
+- `GET /api/usage?email=...` returns `{ today, limit, remaining, isPaused }` per user
+- Available to all authenticated sessions
+
+#### Added — `/api/admin/usage` endpoint
+- `GET /api/admin/usage` (requires `x-admin-password` header)
+- Returns total today, per-user stats, and current limit settings
+
+#### Added — `/api/admin/limits` endpoint
+- `POST /api/admin/limits` (requires `x-admin-password` header)
+- Updates `dailyLimitPerUser` and/or `isPaused` in `data/limits.json`
+
+#### Changed — Generate endpoint
+- `POST /api/generate` now accepts `userEmail` in request body
+- Checks + records usage before proxying to AI provider
+- Returns HTTP 429 with friendly message when limit hit or paused
+
+#### Changed — Roadmap
+- ✅ API abuse controls with per-user daily limits
+
+---
+
 ## [1.4.0] — 2026-06-02
 
 ### ✨ New Modules, Export, Rate Limiting & Admin User Management
@@ -226,6 +280,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - [ ] DM / Outreach Script Generator
 
 ### Platform Enhancements
+- [x] API abuse controls with per-user daily limits *(v1.5.0)*
 - [ ] User dashboard with saved history
 - [ ] Team collaboration workspace
 - [ ] Email notifications for new sign-ups (admin)

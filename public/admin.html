@@ -114,6 +114,29 @@
     <button class="btn-login" id="save-settings">Save Settings</button>
     <p class="saved-msg hidden" id="saved-msg">✓ Settings saved</p>
 
+    <!-- API Usage Controls (admin only) -->
+    <div class="modal-divider admin-only"></div>
+    <div class="api-controls-section admin-only">
+      <h3 class="section-subtitle">API Usage Controls</h3>
+      <div class="form-group">
+        <label>Daily Generation Limit Per User</label>
+        <div class="limit-row">
+          <input type="number" id="daily-limit-input" min="1" max="500" value="20"/>
+          <span class="limit-unit">generations / day</span>
+          <button class="btn-save-limit" id="btn-save-limit">Save</button>
+        </div>
+      </div>
+      <div class="pause-control">
+        <div>
+          <strong id="pause-status-label">✅ Generations Active</strong>
+          <p>Pause to block all AI generation immediately for all users.</p>
+        </div>
+        <button class="btn-pause-toggle" id="btn-pause-toggle">Pause All</button>
+      </div>
+      <p class="saved-msg hidden" id="limits-saved-msg">✓ Limits updated</p>
+      <div class="usage-summary admin-only" id="usage-summary"></div>
+    </div>
+
     <!-- Change Admin Password (admin only) -->
     <div class="modal-divider admin-only"></div>
     <div class="change-pw-section admin-only">
@@ -235,6 +258,9 @@
           </div>
           <div class="overview-stats">
             <div class="stat-pill"><span id="stat-done">0</span>/8 Completed</div>
+            <div class="stat-pill usage-pill" id="usage-pill">
+              <span id="stat-usage-today">0</span>/<span id="stat-usage-limit">20</span> today
+            </div>
             <div class="stat-pill model-pill" id="model-pill">Opus 4.8</div>
           </div>
         </div>

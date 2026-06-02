@@ -14,6 +14,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const DATA_DIR      = path.join(__dirname, 'data');
 const USERS_FILE    = path.join(DATA_DIR, 'users.json');
 const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
+const USAGE_FILE    = path.join(DATA_DIR, 'usage.json');
+const LIMITS_FILE   = path.join(DATA_DIR, 'limits.json');
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -35,6 +37,41 @@ function getAdminPassword() {
 
 function hashPassword(p) {
   return crypto.createHash('sha256').update(p + 'pm_salt_2025').digest('hex');
+}
+
+function loadUsage() {
+  try { return fs.existsSync(USAGE_FILE) ? JSON.parse(fs.readFileSync(USAGE_FILE, 'utf-8')) : {}; }
+  catch { return {}; }
+}
+function saveUsage(u) { fs.writeFileSync(USAGE_FILE, JSON.stringify(u, null, 2)); }
+
+function loadLimits() {
+  try { return fs.existsSync(LIMITS_FILE) ? JSON.parse(fs.readFileSync(LIMITS_FILE, 'utf-8')) : {}; }
+  catch { return {}; }
+}
+function saveLimits(l) { fs.writeFileSync(LIMITS_FILE, JSON.stringify(l, null, 2)); }
+
+function getDailyLimit()       { return loadLimits().dailyLimitPerUser || 20; }
+function isGenerationPaused()  { return loadLimits().isPaused || false; }
+function today()               { return new Date().toISOString().split('T')[0]; }
+
+function checkAndRecordUsage(email) {
+  if (isGenerationPaused())
+    return { allowed: false, reason: 'All generations are currently paused by the administrator.' };
+
+  if (!email || email === 'admin') return { allowed: true };
+
+  const usage = loadUsage();
+  const limit = getDailyLimit();
+  const count = (usage[email] || {})[today()] || 0;
+
+  if (count >= limit)
+    return { allowed: false, reason: `Daily limit of ${limit} generations reached. Resets at midnight.` };
+
+  if (!usage[email]) usage[email] = {};
+  usage[email][today()] = count + 1;
+  saveUsage(usage);
+  return { allowed: true, remaining: limit - count - 1 };
 }
 
 /* ── Server-side API keys ──────────────────────────────────── */
@@ -154,8 +191,59 @@ function rateLimit(maxPerMin) {
 }
 
 /* ── Generate (streaming) ──────────────────────────────────── */
+/* ── Usage info (per user) ─────────────────────────────────── */
+app.get('/api/usage', (req, res) => {
+  const email  = (req.query.email || '').toLowerCase().trim();
+  const limit  = getDailyLimit();
+  const paused = isGenerationPaused();
+  const count  = email ? ((loadUsage()[email] || {})[today()] || 0) : 0;
+  res.json({ today: count, limit, remaining: Math.max(0, limit - count), isPaused: paused });
+});
+
+/* ── Admin: usage stats ────────────────────────────────────── */
+app.get('/api/admin/usage', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (!pwd || pwd !== getAdminPassword()) return res.status(401).json({ error: 'Unauthorized' });
+
+  const usage  = loadUsage();
+  const limits = loadLimits();
+  const t      = today();
+
+  const stats = Object.entries(usage)
+    .map(([email, days]) => ({
+      email,
+      today: days[t] || 0,
+      total: Object.values(days).reduce((a, b) => a + b, 0)
+    }))
+    .filter(u => u.total > 0)
+    .sort((a, b) => b.today - a.today);
+
+  res.json({
+    totalToday: stats.reduce((s, u) => s + u.today, 0),
+    stats,
+    limits: { dailyLimitPerUser: limits.dailyLimitPerUser || 20, isPaused: limits.isPaused || false }
+  });
+});
+
+/* ── Admin: update limits ──────────────────────────────────── */
+app.post('/api/admin/limits', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (!pwd || pwd !== getAdminPassword()) return res.status(401).json({ error: 'Unauthorized' });
+
+  const { dailyLimitPerUser, isPaused } = req.body;
+  const limits = loadLimits();
+  if (dailyLimitPerUser !== undefined) limits.dailyLimitPerUser = Math.max(1, parseInt(dailyLimitPerUser) || 20);
+  if (isPaused !== undefined)          limits.isPaused = !!isPaused;
+  saveLimits(limits);
+  res.json({ success: true, limits });
+});
+
+/* ── Generate (streaming) ──────────────────────────────────── */
 app.post('/api/generate', rateLimit(20), async (req, res) => {
-  const { systemPrompt, userPrompt, apiKey, model, provider = 'anthropic' } = req.body;
+  const { systemPrompt, userPrompt, apiKey, model, provider = 'anthropic', userEmail } = req.body;
+
+  const usageCheck = checkAndRecordUsage((userEmail || '').toLowerCase().trim());
+  if (!usageCheck.allowed) return res.status(429).json({ error: usageCheck.reason });
 
   const effectiveKey = SERVER_KEYS[provider] || apiKey;
   if (!effectiveKey) return res.status(400).json({ error: 'No API key configured for this provider.' });

@@ -126,9 +126,10 @@ let currentProvider = localStorage.getItem('pm_provider') || 'anthropic';
 const serverKeys    = { anthropic: false, deepseek: false };
 
 /* ── Session helpers ─────────────────────────────────────── */
-function isAdmin()    { return sessionStorage.getItem('pm_role') === 'admin'; }
-function getUserName(){ return sessionStorage.getItem('pm_user_name') || ''; }
-function getAdminPw() { return sessionStorage.getItem('pm_admin_pw') || ''; }
+function isAdmin()     { return sessionStorage.getItem('pm_role') === 'admin'; }
+function getUserName() { return sessionStorage.getItem('pm_user_name') || ''; }
+function getUserEmail(){ return sessionStorage.getItem('pm_user_email') || ''; }
+function getAdminPw()  { return sessionStorage.getItem('pm_admin_pw') || ''; }
 
 /* ── DOM ─────────────────────────────────────────────────── */
 const loginScreen   = document.getElementById('login-screen');
@@ -205,6 +206,7 @@ async function userLogin() {
     if (data.success) {
       sessionStorage.setItem('pm_role', 'user');
       sessionStorage.setItem('pm_user_name', data.firstName);
+      sessionStorage.setItem('pm_user_email', email.toLowerCase());
       showDashboard();
     } else {
       errEl.textContent = data.error || 'Invalid email or password.';
@@ -263,6 +265,22 @@ async function showDashboard() {
   buildModuleGrid();
   buildNavHandlers();
   updateStats();
+  loadUsageStatus();
+}
+
+/* ── Usage status (per-user daily counter) ───────────────── */
+async function loadUsageStatus() {
+  try {
+    const email = getUserEmail();
+    const res   = await fetch(`/api/usage?email=${encodeURIComponent(email)}`);
+    const data  = await res.json();
+    const todayEl = document.getElementById('stat-usage-today');
+    const limitEl = document.getElementById('stat-usage-limit');
+    const pill    = document.getElementById('usage-pill');
+    if (todayEl) todayEl.textContent = data.today;
+    if (limitEl) limitEl.textContent = data.limit;
+    if (pill) pill.classList.toggle('limit-hit', data.today >= data.limit);
+  } catch { /* non-fatal */ }
 }
 
 /* ── Role-based UI ───────────────────────────────────────── */
@@ -356,7 +374,65 @@ function updateApiStatus(hasKey, model) {
 }
 
 [document.getElementById('open-settings'), document.getElementById('open-settings-sb')].forEach(el => {
-  if (el) el.onclick = () => settingsModal.classList.remove('hidden');
+  if (el) el.onclick = () => { settingsModal.classList.remove('hidden'); if (isAdmin()) loadAdminLimits(); };
+});
+
+/* ── Admin Limits ────────────────────────────────────────── */
+async function loadAdminLimits() {
+  try {
+    const res  = await fetch('/api/admin/usage', { headers: { 'x-admin-password': getAdminPw() } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const limitInput  = document.getElementById('daily-limit-input');
+    const pauseBtn    = document.getElementById('btn-pause-toggle');
+    const pauseLabel  = document.getElementById('pause-status-label');
+    const summaryEl   = document.getElementById('usage-summary');
+    if (limitInput) limitInput.value = data.limits.dailyLimitPerUser;
+    updatePauseUI(data.limits.isPaused, pauseBtn, pauseLabel);
+    if (summaryEl && data.stats.length > 0) {
+      summaryEl.innerHTML = `<p class="usage-summary-title">Today's Usage — ${data.totalToday} total</p>` +
+        data.stats.slice(0, 10).map(u => `<div class="usage-row"><span class="usage-email">${escapeHtml(u.email)}</span><span class="usage-count">${u.today} today · ${u.total} total</span></div>`).join('');
+    } else if (summaryEl) {
+      summaryEl.innerHTML = '<p style="color:#8899aa;font-size:13px">No usage recorded yet.</p>';
+    }
+  } catch { /* non-fatal */ }
+}
+
+function updatePauseUI(isPaused, btn, label) {
+  if (!btn || !label) return;
+  label.textContent = isPaused ? '⏸ Generations Paused' : '✅ Generations Active';
+  btn.textContent   = isPaused ? 'Resume All' : 'Pause All';
+  btn.classList.toggle('paused', isPaused);
+}
+
+document.getElementById('btn-save-limit').addEventListener('click', async () => {
+  const val   = parseInt(document.getElementById('daily-limit-input').value) || 20;
+  const msgEl = document.getElementById('limits-saved-msg');
+  try {
+    const res = await fetch('/api/admin/limits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPw() },
+      body: JSON.stringify({ dailyLimitPerUser: val })
+    });
+    if (res.ok) {
+      msgEl.classList.remove('hidden');
+      setTimeout(() => msgEl.classList.add('hidden'), 2000);
+    }
+  } catch { /* non-fatal */ }
+});
+
+document.getElementById('btn-pause-toggle').addEventListener('click', async () => {
+  const pauseBtn   = document.getElementById('btn-pause-toggle');
+  const pauseLabel = document.getElementById('pause-status-label');
+  const isPaused   = pauseBtn.textContent.trim() === 'Pause All';
+  try {
+    const res = await fetch('/api/admin/limits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPw() },
+      body: JSON.stringify({ isPaused })
+    });
+    if (res.ok) updatePauseUI(isPaused, pauseBtn, pauseLabel);
+  } catch { /* non-fatal */ }
 });
 document.getElementById('close-settings').onclick = () => settingsModal.classList.add('hidden');
 document.getElementById('save-settings').onclick  = saveSettings;
@@ -531,12 +607,14 @@ async function generate() {
   try {
     const resp = await fetch('/api/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider: currentProvider })
+      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider: currentProvider, userEmail: getUserEmail() })
     });
     if (!resp.ok) { const err = await resp.json().catch(() => ({ error: resp.statusText })); throw new Error(err.error || resp.statusText); }
     const reader = resp.body.getReader(); const decoder = new TextDecoder();
     while (true) { const { done, value } = await reader.read(); if (done) break; fullOutput += decoder.decode(value, { stream: true }); renderStreaming(fullOutput); }
     renderFinal(fullOutput); markDone(m.id);
+    const todayEl = document.getElementById('stat-usage-today');
+    if (todayEl && !isAdmin()) todayEl.textContent = parseInt(todayEl.textContent || '0') + 1;
   } catch (err) { renderError(err.message); }
   finally { setGenerating(false); }
 }
