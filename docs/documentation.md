@@ -1,6 +1,6 @@
 # PromptMaster — Documentation
 
-> AI Social Media Agency | v1.0.0 | Built with Anthropic Claude API
+> Free AI Social Media Agency | v1.3.0 | Anthropic Claude + DeepSeek
 
 ---
 
@@ -8,57 +8,107 @@
 
 ### Prerequisites
 - Node.js 18+
-- An Anthropic API key ([console.anthropic.com](https://console.anthropic.com/settings/keys))
+- An Anthropic API key **or** a DeepSeek API key (or set one server-side in `.env` so users don't need their own)
 
 ### Installation
 ```bash
+git clone <repo>
+cd prompt-master
 npm install
 npm start
 ```
 
-The server starts on **http://localhost:3000** by default.
+The server starts on **http://localhost:3000** (or `http://127.0.0.1:3000` on Windows).
 
 ### Configuration
-Create a `.env` file (copy from `.env.example`):
-```
+Copy `.env.example` to `.env` and fill in your values:
+```env
 PORT=3000
 ADMIN_PASSWORD=your_secure_password
+
+# Optional — set so all users can generate without their own key
+ANTHROPIC_API_KEY=sk-ant-api03-...
+DEEPSEEK_API_KEY=sk-...
 ```
 
-### First Use
-1. Open `http://localhost:3000`
-2. Click **⚙ Settings** in the sidebar
-3. Paste your Anthropic API key
-4. Choose a model (Opus 4.8 recommended for best results)
-5. Click **Save Settings**
-6. Select any module and start generating
+If `ANTHROPIC_API_KEY` or `DEEPSEEK_API_KEY` are set in `.env`, users do **not** need to enter their own key — the server key is used automatically.
 
 ---
 
-## Modules
+## User Accounts
+
+PromptMaster is a **free platform**. Anyone can sign up and access all 6 AI modules at no cost.
+
+### Registering
+1. Open the landing page (`http://localhost:3000`)
+2. Scroll to **Create Your Free Account**
+3. Enter your first name, email, and a password (min. 6 characters)
+4. Click **Create Free Account** — your account is ready instantly
+5. Click the link to go to the dashboard and sign in
+
+### Signing In (Users)
+1. Go to `http://localhost:3000/admin.html`
+2. The **User Login** tab is shown by default
+3. Enter your email and password
+4. You'll see a personalized dashboard greeting and full access to all 6 AI modules
+
+### Signing In (Admin)
+1. Go to `http://localhost:3000/admin.html`
+2. Click the **Admin** tab
+3. Enter your admin password
+4. You'll have full access including Settings, Users panel, and password management
+
+---
+
+## AI Providers
+
+PromptMaster supports two AI providers. Switch between them in Settings at any time.
+
+### Anthropic Claude
+| Model | ID | Best For |
+|-------|----|---------|
+| Claude Opus 4.8 | `claude-opus-4-8` | Highest quality (recommended) |
+| Claude Sonnet 4.6 | `claude-sonnet-4-6` | Balanced quality + speed |
+| Claude Haiku 4.5 | `claude-haiku-4-5-20251001` | Fast, economical |
+
+Get your key: [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
+
+### DeepSeek
+| Model | ID | Best For |
+|-------|----|---------|
+| DeepSeek Chat | `deepseek-chat` | General social media tasks |
+| DeepSeek Reasoner | `deepseek-reasoner` | Complex strategic analysis |
+
+Get your key: [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys)
+
+> **Note:** All 6 AI module prompts are engineered to produce structured, expert-level output regardless of which provider you use.
+
+---
+
+## The 6 AI Modules
 
 ---
 
 ### Module 1 — Growth Strategy Commander
 
-**Purpose:** Builds a complete, bespoke social media growth strategy tailored to your specific niche, platform, and goal.
+**Purpose:** Builds a complete social media growth strategy tailored to your niche, platform, and specific goal.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Your Niche | Text | The specific topic or market you operate in |
-| Platform | Dropdown | Target social media platform |
-| Growth Goal | Text | Specific, measurable goal (e.g., "10K followers in 90 days") |
+| Field | Type | Example |
+|-------|------|---------|
+| Your Niche | Text | `fitness coaching`, `B2B SaaS`, `personal finance` |
+| Platform | Dropdown | Instagram, TikTok, YouTube, LinkedIn, Twitter/X, Facebook, Pinterest, Threads |
+| Growth Goal | Text | `reach 10K followers in 90 days` |
 
 **Output Sections:**
-1. Strategic Positioning — how to stand out in your niche on this platform
-2. Core Content Pillars — 5–7 recurring content categories
-3. Posting Schedule & Cadence — optimal frequency and timing
-4. Algorithm-Specific Engagement Tactics — platform-native growth behaviors
-5. KPIs & Success Metrics — how to measure progress
-6. 30-Day Action Plan — weekly milestones
+1. Strategic Positioning
+2. Core Content Pillars (5–7)
+3. Posting Schedule & Cadence
+4. Algorithm-Specific Engagement Tactics
+5. KPIs & Success Metrics
+6. 30-Day Action Plan (week by week)
 
-**Best Used For:** Starting a new account, relaunching a stagnant account, or scaling an existing presence.
+**Best Used For:** Starting a new account, relaunching a stagnant presence, or scaling existing growth.
 
 ---
 
@@ -67,9 +117,9 @@ ADMIN_PASSWORD=your_secure_password
 **Purpose:** Produces a deep psychological profile of your target audience to inform every content decision.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Your Niche | Text | The audience niche to analyze |
+| Field | Type | Example |
+|-------|------|---------|
+| Your Niche | Text | `online fitness coaching`, `crypto investing` |
 
 **Output Sections:**
 1. Core Demographics & Psychographics
@@ -82,18 +132,18 @@ ADMIN_PASSWORD=your_secure_password
 8. Identity & Self-Perception Gap
 9. Content Strategy Implications
 
-**Best Used For:** Before creating a content calendar, understanding a new niche, or diagnosing low engagement.
+**Best Used For:** Before building a content calendar, entering a new niche, or diagnosing low engagement.
 
 ---
 
 ### Module 3 — Viral Content Idea Engine
 
-**Purpose:** Generates 30 high-potential content ideas using proven viral content frameworks, organized by psychological category.
+**Purpose:** Generates 30 high-potential content ideas across 6 proven viral frameworks.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Your Niche | Text | The niche to generate ideas for |
+| Field | Type | Example |
+|-------|------|---------|
+| Your Niche | Text | `productivity for entrepreneurs`, `vegan recipes` |
 
 **Output:** 30 ideas across 6 categories:
 - Curiosity & Mystery (5)
@@ -103,22 +153,22 @@ ADMIN_PASSWORD=your_secure_password
 - Proof & Social Validation (5)
 - Education & Value Bombs (5)
 
-Each idea includes: concept, psychological rationale, and an opening hook line.
+Each idea includes: concept, why it works, and a ready-to-use hook line.
 
-**Best Used For:** Building a content calendar, breaking creative blocks, quarterly content planning.
+**Best Used For:** Monthly content planning, breaking creative blocks, building a full content calendar.
 
 ---
 
 ### Module 4 — Hook Engineering Lab
 
-**Purpose:** Generates 20 scroll-stopping opening hooks for your niche, categorized by psychological trigger type.
+**Purpose:** Generates 20 scroll-stopping opening hooks for your niche, categorized by psychological trigger type. All hooks are copy-ready.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Your Niche | Text | The niche to write hooks for |
+| Field | Type | Example |
+|-------|------|---------|
+| Your Niche | Text | `real estate investing`, `mindset coaching`, `AI tools` |
 
-**Output:** 20 copy-ready hooks across 6 trigger types:
+**Output:** 20 hooks across 6 trigger types:
 - Curiosity Gap (4)
 - Identity & Relatability (4)
 - Shocking Stat & Fact (3)
@@ -126,7 +176,7 @@ Each idea includes: concept, psychological rationale, and an opening hook line.
 - Contrarian & Controversy (3)
 - Transformation (3)
 
-**Best Used For:** Writing video scripts, crafting captions, A/B testing opening lines, improving content retention.
+**Best Used For:** Writing video scripts, crafting captions, A/B testing opening lines.
 
 ---
 
@@ -135,10 +185,10 @@ Each idea includes: concept, psychological rationale, and an opening hook line.
 **Purpose:** Delivers a platform-specific algorithm playbook explaining exactly what content behaviors drive organic reach.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Platform | Dropdown | The platform to analyze |
-| Your Niche | Text | Your content niche on that platform |
+| Field | Type | Example |
+|-------|------|---------|
+| Platform | Dropdown | Instagram, TikTok, YouTube, LinkedIn, Twitter/X... |
+| Your Niche | Text | `fashion`, `tech reviews`, `business coaching` |
 
 **Output Sections:**
 1. How the Platform Algorithm Works
@@ -150,7 +200,7 @@ Each idea includes: concept, psychological rationale, and an opening hook line.
 7. Reach Killers — What to Avoid
 8. 30-Day Algorithm Reset Plan
 
-**Best Used For:** Diagnosing declining reach, optimizing an existing strategy, or understanding a new platform.
+**Best Used For:** Diagnosing declining reach, optimizing strategy, or understanding a new platform.
 
 ---
 
@@ -159,9 +209,9 @@ Each idea includes: concept, psychological rationale, and an opening hook line.
 **Purpose:** Transforms a single content idea into 6 platform-native formats, dramatically increasing content output efficiency.
 
 **Inputs:**
-| Field | Type | Description |
-|-------|------|-------------|
-| Your Content Idea | Textarea | The core idea, topic, script, or message to repurpose |
+| Field | Type | Example |
+|-------|------|---------|
+| Your Content Idea | Textarea | A topic, script, caption, or core message |
 
 **Output Formats:**
 1. Short-Form Video Script (TikTok / Reels / Shorts)
@@ -171,61 +221,112 @@ Each idea includes: concept, psychological rationale, and an opening hook line.
 5. LinkedIn Post
 6. Engagement Bait Post
 
-**Best Used For:** Scaling content output, repurposing evergreen content, maximizing ROI from each idea.
+**Best Used For:** Scaling content output, repurposing evergreen content, maximizing ROI from every idea.
 
 ---
 
-## Settings
+## Settings (Admin)
 
+The Settings modal is available to admins. It includes:
+
+### AI Provider & Model
 | Setting | Description | Storage |
 |---------|-------------|---------|
-| API Key | Your Anthropic API key | `localStorage` (browser only) |
-| Model | Claude model to use for generation | `localStorage` |
+| Provider | Anthropic Claude or DeepSeek | `localStorage` → `pm_provider` |
+| API Key (Anthropic) | Your Anthropic API key | `localStorage` → `pm_key_anthropic` |
+| API Key (DeepSeek) | Your DeepSeek API key | `localStorage` → `pm_key_deepseek` |
+| Model | Model for the selected provider | `localStorage` → `pm_model_<provider>` |
 
-### Available Models
-| Model ID | Name | Best For |
-|----------|------|----------|
-| `claude-opus-4-8` | Claude Opus 4.8 | Highest quality output (recommended) |
-| `claude-sonnet-4-6` | Claude Sonnet 4.6 | Balanced quality + speed |
-| `claude-haiku-4-5-20251001` | Claude Haiku 4.5 | Fast, economical generation |
+### Change Admin Password
+1. Open Settings → scroll to "Change Admin Password"
+2. Enter current password and new password (min. 6 characters)
+3. Click **Update Password**
+4. The new password takes effect immediately — no server restart needed
 
 ---
 
-## Admin Dashboard
+## Admin Users Panel
 
-Access at `/admin.html`. Default password: `admin2025` (change via `ADMIN_PASSWORD` env var).
+Admins can see every registered user under **Admin → 👥 Users** in the sidebar.
 
-**Tabs:**
-- **Workflow** — Full system architecture and request lifecycle documentation
-- **Docs** — This module documentation file
-- **Changelog** — Version history and release notes
+Columns shown:
+- **#** — Row number
+- **First Name** — Registered first name
+- **Email** — Registered email address
+- **Joined** — Registration date
+
+The total user count appears as a badge on the sidebar nav item and in the stats bar.
 
 ---
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/generate` | Stream Claude response for a module |
-| `POST` | `/api/verify-admin` | Verify admin password |
-| `GET`  | `/api/content/:type` | Fetch workflow/documentation/changelog |
+| Method | Path | Description | Auth Required |
+|--------|------|-------------|--------------|
+| `GET`  | `/api/config` | Returns server key availability per provider | None |
+| `POST` | `/api/register` | Register a new user | None |
+| `POST` | `/api/user-login` | Authenticate a registered user | None |
+| `POST` | `/api/verify-admin` | Verify admin password | None |
+| `POST` | `/api/generate` | Stream AI response for a module | None (key in body) |
+| `GET`  | `/api/users` | List registered users | `x-admin-password` header |
+| `POST` | `/api/admin/change-password` | Change admin password | Body: currentPassword |
+| `GET`  | `/api/content/:type` | Fetch workflow/documentation/changelog | None |
+
+### POST /api/register
+```json
+{ "firstName": "string", "email": "string", "password": "string (min 6 chars)" }
+```
+Response: `{ "success": true, "firstName": "string" }` or `400/409`
+
+### POST /api/user-login
+```json
+{ "email": "string", "password": "string" }
+```
+Response: `{ "success": true, "firstName": "string" }` or `401`
 
 ### POST /api/generate
-**Body:**
 ```json
 {
   "systemPrompt": "string",
   "userPrompt":   "string",
-  "apiKey":       "sk-ant-...",
-  "model":        "claude-opus-4-8"
+  "apiKey":       "string (optional if server key is set)",
+  "model":        "claude-opus-4-8 | deepseek-chat | ...",
+  "provider":     "anthropic | deepseek"
 }
 ```
-**Response:** Chunked `text/plain` stream
+Response: Chunked `text/plain` stream
 
-### POST /api/verify-admin
-**Body:** `{ "password": "string" }`
-**Response:** `{ "success": true }` or `401`
+### GET /api/users
+Headers: `x-admin-password: <admin-password>`
+Response: `{ "total": number, "users": [{ id, firstName, email, joinedAt }] }`
 
-### GET /api/content/:type
-**Params:** `type` = `workflow` | `documentation` | `changelog`
-**Response:** `{ "content": "markdown string" }`
+### POST /api/admin/change-password
+```json
+{ "currentPassword": "string", "newPassword": "string (min 6 chars)" }
+```
+Response: `{ "success": true }` or `400/401`
+
+---
+
+## File Structure
+
+```
+prompt-master/
+├── server.js             # Express server, all API routes
+├── package.json
+├── .env                  # Your config (not committed)
+├── .env.example          # Config template
+├── data/                 # Auto-created on first run
+│   ├── users.json        # Registered user records
+│   └── settings.json     # Admin password override
+├── docs/
+│   ├── workflow.md       # System architecture doc
+│   ├── documentation.md  # This file
+│   └── changelog.md      # Version history
+└── public/
+    ├── index.html        # Landing page (free signup)
+    ├── landing.css
+    ├── admin.html        # Dashboard (login + all views)
+    ├── admin.css
+    └── admin.js
+```
