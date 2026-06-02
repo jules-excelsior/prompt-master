@@ -413,6 +413,12 @@ textarea{resize:vertical;min-height:100px;line-height:1.65;}
 .row-num{color:var(--muted2);font-size:12px;width:36px;}
 .email-cell{color:var(--muted);}
 .date-cell{color:var(--muted2);font-size:12px;white-space:nowrap;}
+.user-del-btn{
+  padding:4px 8px;border-radius:6px;font-size:11px;
+  background:transparent;border:1px solid rgba(239,68,68,.2);
+  color:rgba(239,68,68,.5);cursor:pointer;transition:all .15s;
+}
+.user-del-btn:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.5);color:var(--red);}
 .users-loading{
   display:flex;align-items:center;gap:12px;color:var(--muted);
   font-size:14px;padding:40px 16px;

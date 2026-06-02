@@ -68,6 +68,35 @@ const MODULES = [
     inputs: [{ id: 'content', label: 'Your Content Idea', type: 'textarea', ph: 'Paste your content idea, topic, script, or core message here…' }],
     system: 'You are a content repurposing strategist. Use markdown ## headers for each format.',
     prompt: (v) => `Repurpose this into 6 platform-specific formats:\n\n**Original Idea:**\n${v.content}\n\n## 1. Short-Form Video Script (TikTok/Reels/Shorts)\n## 2. Carousel Post (Instagram/LinkedIn)\n## 3. Long-Form Caption (Instagram/Facebook)\n## 4. Twitter/X Thread\n## 5. LinkedIn Post\n## 6. Engagement Bait Post\n\nEach format: platform-native and copy-ready.`
+  },
+  {
+    id: 'content-calendar',
+    name: 'Content Calendar Generator',
+    icon: '📅', color: '#06b6d4',
+    gradient: 'linear-gradient(135deg,#06b6d4,#0891b2)',
+    desc: 'Generate a complete 30-day content calendar with daily post ideas, hooks, content angles, and formats tailored to your niche and platform.',
+    inputs: [
+      { id: 'niche',     label: 'Your Niche',          type: 'text',   ph: 'e.g., personal finance, fitness coaching, SaaS startup' },
+      { id: 'platform',  label: 'Platform',             type: 'select', opts: ['Instagram','TikTok','YouTube','LinkedIn','Twitter/X','Facebook','Pinterest','Threads'] },
+      { id: 'frequency', label: 'Posting Frequency',   type: 'select', opts: ['Daily (7x/week)','5x per week','3x per week','2x per week','Weekly'] },
+      { id: 'pillars',   label: 'Content Pillars',      type: 'text',   ph: 'e.g., education, inspiration, behind-the-scenes, promotion' }
+    ],
+    system: 'You are an expert content strategist and social media planner. Create detailed, actionable 30-day content calendars with richly structured markdown.',
+    prompt: (v) => `Create a complete 30-day content calendar for a ${v.niche} creator on ${v.platform}, posting ${v.frequency}.\n\nContent Pillars: ${v.pillars}\n\nFor each post include:\n- **Day & Date label** (Day 1, Day 2, etc.)\n- **Content Pillar**\n- **Format** (Reel, carousel, static, story, thread, etc.)\n- **Hook / Opening Line** (copy-ready)\n- **Content Angle** (what the post is actually about)\n- **CTA** (call to action)\n\nOrganize into 4 weeks:\n## Week 1 — Foundation\n## Week 2 — Momentum\n## Week 3 — Authority\n## Week 4 — Conversion\n\nAdd a brief strategy note at the top explaining the arc for the month.`
+  },
+  {
+    id: 'hashtag-strategy',
+    name: 'Hashtag & SEO Strategy',
+    icon: '🏷️', color: '#8b5cf6',
+    gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)',
+    desc: 'Build a complete hashtag research playbook with tiered sets, rotation schedules, and platform-specific SEO tactics to maximize discoverability.',
+    inputs: [
+      { id: 'niche',       label: 'Your Niche',      type: 'text',   ph: 'e.g., sustainable fashion, B2B marketing, online fitness' },
+      { id: 'platform',    label: 'Platform',         type: 'select', opts: ['Instagram','TikTok','LinkedIn','Twitter/X','YouTube','Pinterest','Threads'] },
+      { id: 'contentType', label: 'Content Type',     type: 'text',   ph: 'e.g., transformation reels, thought leadership posts, tutorial videos' }
+    ],
+    system: 'You are a hashtag research specialist and social media SEO expert. Provide specific, data-driven hashtag and discoverability strategies in structured markdown.',
+    prompt: (v) => `Create a complete hashtag and SEO strategy for a ${v.niche} creator posting ${v.contentType} on ${v.platform}.\n\n## Strategy Overview\n## Tier 1 — Mega Hashtags (1M+ posts) — Use sparingly (2–3)\n## Tier 2 — Large Hashtags (100K–1M posts) — Core reach (5–7)\n## Tier 3 — Medium Hashtags (10K–100K posts) — Sweet spot (8–10)\n## Tier 4 — Niche Hashtags (1K–10K posts) — High conversion (5–7)\n## Branded & Community Hashtags\n## 4-Week Rotation Schedule (vary sets to avoid shadowban)\n## Platform-Specific SEO Tips for ${v.platform}\n## Caption & Bio SEO Keywords\n## What to Avoid (shadowban triggers, banned tags)\n\nInclude 30–40 specific example hashtags throughout.`
   }
 ];
 
@@ -123,6 +152,7 @@ const btnText       = document.getElementById('btn-text');
 const btnSpinner    = document.getElementById('btn-spinner');
 const btnClear      = document.getElementById('btn-clear');
 const btnCopy       = document.getElementById('btn-copy');
+const btnDownload   = document.getElementById('btn-download');
 const outputPlaceholder = document.getElementById('output-placeholder');
 const outputContent = document.getElementById('output-content');
 const statusDot     = document.getElementById('status-dot');
@@ -477,6 +507,7 @@ function buildInputs(m) {
 btnGenerate.onclick = generate;
 btnClear.onclick    = clearOutput;
 btnCopy.onclick     = copyOutput;
+if (btnDownload) btnDownload.onclick = downloadOutput;
 
 async function generate() {
   if (isGenerating) return;
@@ -519,7 +550,9 @@ function renderStreaming(text) {
 function renderFinal(text) {
   outputContent.style.whiteSpace = '';
   outputContent.innerHTML = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
-  btnCopy.classList.remove('hidden'); btnClear.classList.remove('hidden');
+  btnCopy.classList.remove('hidden');
+  if (btnDownload) btnDownload.classList.remove('hidden');
+  btnClear.classList.remove('hidden');
 }
 function renderError(msg) {
   outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden');
@@ -527,11 +560,21 @@ function renderError(msg) {
   outputContent.innerHTML = `<span style="color:#ef4444">⚠ Error: ${escapeHtml(msg)}\n\nCheck your API key in Settings.</span>`;
 }
 function showOutputArea() { outputContent.classList.remove('hidden'); outputPlaceholder.classList.add('hidden'); outputContent.innerHTML = ''; }
-function clearOutput() { outputContent.classList.add('hidden'); outputContent.innerHTML = ''; outputPlaceholder.classList.remove('hidden'); btnCopy.classList.add('hidden'); btnClear.classList.add('hidden'); fullOutput = ''; }
+function clearOutput() { outputContent.classList.add('hidden'); outputContent.innerHTML = ''; outputPlaceholder.classList.remove('hidden'); btnCopy.classList.add('hidden'); if (btnDownload) btnDownload.classList.add('hidden'); btnClear.classList.add('hidden'); fullOutput = ''; }
 function setGenerating(state) { isGenerating = state; btnGenerate.disabled = state; btnText.classList.toggle('hidden', state); btnSpinner.classList.toggle('hidden', !state); }
 function copyOutput() {
   if (!fullOutput) return;
   navigator.clipboard.writeText(fullOutput).then(() => { btnCopy.textContent = 'Copied!'; btnCopy.classList.add('copied'); setTimeout(() => { btnCopy.textContent = 'Copy'; btnCopy.classList.remove('copied'); }, 2000); });
+}
+function downloadOutput() {
+  if (!fullOutput) return;
+  const m    = MODULES.find(x => x.id === activeModuleId);
+  const name = (m ? m.name.toLowerCase().replace(/\s+/g, '-') : 'output');
+  const blob = new Blob([fullOutput], { type: 'text/plain; charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `promptmaster-${name}.txt`; a.click();
+  URL.revokeObjectURL(url);
 }
 function markDone(id) {
   completedIds.add(id); localStorage.setItem('pm_done', JSON.stringify([...completedIds]));
@@ -568,22 +611,46 @@ async function openUsersView() {
     table.className = 'users-table';
     table.innerHTML = `
       <thead>
-        <tr><th>#</th><th>First Name</th><th>Email</th><th>Joined</th></tr>
+        <tr><th>#</th><th>First Name</th><th>Email</th><th>Joined</th><th></th></tr>
       </thead>
       <tbody>
         ${data.users.map((u, i) => `
-          <tr>
+          <tr id="user-row-${escapeHtml(u.id)}">
             <td class="row-num">${i + 1}</td>
             <td><strong>${escapeHtml(u.firstName)}</strong></td>
             <td class="email-cell">${escapeHtml(u.email)}</td>
             <td class="date-cell">${new Date(u.joinedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })}</td>
+            <td><button class="user-del-btn" data-id="${escapeHtml(u.id)}" data-name="${escapeHtml(u.firstName)}" title="Delete user">✕</button></td>
           </tr>`).join('')}
       </tbody>`;
     wrap.innerHTML = '';
     wrap.appendChild(table);
+    wrap.querySelectorAll('.user-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => deleteUser(btn.dataset.id, btn.dataset.name));
+    });
   } catch (err) {
     wrap.innerHTML = `<div class="users-empty"><p style="color:#ef4444">Failed to load: ${escapeHtml(err.message)}</p></div>`;
   }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+  try {
+    const res = await fetch(`/api/users/${id}`, {
+      method: 'DELETE', headers: { 'x-admin-password': getAdminPw() }
+    });
+    if (res.ok) {
+      const row = document.getElementById(`user-row-${id}`);
+      if (row) row.remove();
+      const countEl = document.getElementById('stat-total-users');
+      const badge   = document.getElementById('nav-user-count');
+      if (countEl) countEl.textContent = Math.max(0, parseInt(countEl.textContent || '0') - 1);
+      if (badge)   badge.textContent   = Math.max(0, parseInt(badge.textContent   || '0') - 1);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Failed to delete user.');
+    }
+  } catch { alert('Connection error.'); }
 }
 
 /* ── Doc Drawer ──────────────────────────────────────────── */

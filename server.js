@@ -125,8 +125,36 @@ app.post('/api/admin/change-password', (req, res) => {
   res.json({ success: true });
 });
 
+/* ── Admin: Delete User ────────────────────────────────────── */
+app.delete('/api/users/:id', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (!pwd || pwd !== getAdminPassword())
+    return res.status(401).json({ error: 'Unauthorized' });
+
+  const users   = loadUsers();
+  const idx     = users.findIndex(u => u.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'User not found' });
+  users.splice(idx, 1);
+  saveUsers(users);
+  res.json({ success: true });
+});
+
+/* ── Rate limiting ─────────────────────────────────────────── */
+const _rl = new Map();
+function rateLimit(maxPerMin) {
+  return (req, res, next) => {
+    const ip  = req.ip;
+    const now = Date.now();
+    const e   = _rl.get(ip) || { n: 0, reset: now + 60000 };
+    if (now > e.reset) { e.n = 0; e.reset = now + 60000; }
+    e.n++; _rl.set(ip, e);
+    if (e.n > maxPerMin) return res.status(429).json({ error: 'Too many requests — please wait a moment before trying again.' });
+    next();
+  };
+}
+
 /* ── Generate (streaming) ──────────────────────────────────── */
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', rateLimit(20), async (req, res) => {
   const { systemPrompt, userPrompt, apiKey, model, provider = 'anthropic' } = req.body;
 
   const effectiveKey = SERVER_KEYS[provider] || apiKey;

@@ -5,6 +5,51 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.4.0] — 2026-06-02
+
+### ✨ New Modules, Export, Rate Limiting & Admin User Management
+
+#### Added — Module 7: Content Calendar Generator
+- Inputs: Niche, Platform, Posting Frequency (5 options), Content Pillars
+- Output: 30-day content calendar organized across 4 themed weeks (Foundation → Momentum → Authority → Conversion)
+- Each day includes: content pillar, format, hook/opening line, content angle, CTA
+- Strategy overview summarizing the monthly arc
+
+#### Added — Module 8: Hashtag & SEO Strategy
+- Inputs: Niche, Platform, Content Type
+- Output: 30–40 specific hashtags across 4 reach tiers (Mega / Large / Medium / Niche)
+- Includes: branded hashtags, 4-week rotation schedule to avoid shadowbans, platform-specific SEO tips, caption and bio keywords, what to avoid
+
+#### Added — Download Output (.txt)
+- "↓ Download" button appears in the output toolbar alongside Copy after generation completes
+- Downloads the raw markdown output as a `.txt` file named after the active module
+- Works in all modern browsers via `Blob` + `URL.createObjectURL`
+
+#### Added — Rate Limiting
+- `/api/generate` limited to 20 requests per minute per IP address
+- Returns HTTP 429 with a friendly error message when exceeded
+- Implemented with a lightweight in-memory sliding window — no extra dependencies
+
+#### Added — Admin: Delete Users
+- Each row in the Users panel now has a ✕ delete button
+- Clicking confirms before sending `DELETE /api/users/:id` with admin password header
+- Row is removed from the table instantly; user counts update without a full reload
+
+#### Changed — Platform Stats
+- Hero stat updated from "6 AI Modules" to "8 AI Modules"
+- Hero subtitle updated to mention content calendars and hashtag SEO
+- Modules section subtitle: "8 modules engineered…"
+
+#### Changed — Dashboard Stats
+- "0/6 Completed" progress counter updated to "0/8 Completed"
+
+#### Changed — Roadmap (items completed)
+- ✅ Export output as `.txt`
+- ✅ Rate limiting on `/api/generate`
+- ✅ Admin: delete user accounts
+
+---
+
 ## [1.3.0] — 2026-06-02
 
 ### 🔐 User Authentication & Admin Management
@@ -166,14 +211,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Roadmap
 
 ### Upcoming
-- [ ] Export output as PDF or `.txt`
+- [x] Export output as `.txt` *(v1.4.0)*
+- [x] Rate limiting on `/api/generate` *(v1.4.0)*
+- [x] Admin: delete user accounts *(v1.4.0)*
+- [ ] Export output as PDF
 - [ ] Save and name output sessions
-- [ ] Admin: delete or deactivate user accounts
-- [ ] Rate limiting on `/api/generate`
 
 ### Future Modules
-- [ ] Content Calendar Generator
-- [ ] Hashtag & SEO Strategy Module
+- [x] Content Calendar Generator *(v1.4.0)*
+- [x] Hashtag & SEO Strategy *(v1.4.0)*
 - [ ] Bio & Profile Optimizer
 - [ ] Competitor Analysis Module
 - [ ] Caption Rewriter (tone variations)
