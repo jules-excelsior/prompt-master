@@ -311,6 +311,7 @@ document.getElementById('btn-logout').onclick = () => {
   sessionStorage.removeItem('pm_role');
   sessionStorage.removeItem('pm_admin_pw');
   sessionStorage.removeItem('pm_user_name');
+  sessionStorage.removeItem('pm_user_email');
   location.reload();
 };
 
@@ -447,8 +448,8 @@ async function loadAdminLimits() {
     const pauseBtn    = document.getElementById('btn-pause-toggle');
     const pauseLabel  = document.getElementById('pause-status-label');
     const summaryEl   = document.getElementById('usage-summary');
-    if (limitInput) limitInput.value = data.limits.dailyLimitPerUser;
-    updatePauseUI(data.limits.isPaused, pauseBtn, pauseLabel);
+    if (limitInput && data.limits) limitInput.value = data.limits.dailyLimitPerUser;
+    updatePauseUI(data.limits?.isPaused, pauseBtn, pauseLabel);
     if (summaryEl && data.stats.length > 0) {
       summaryEl.innerHTML = `<p class="usage-summary-title">Today's Usage — ${data.totalToday} total</p>` +
         data.stats.slice(0, 10).map(u => `<div class="usage-row"><span class="usage-email">${escapeHtml(u.email)}</span><span class="usage-count">${u.today} today · ${u.total} total</span></div>`).join('');
@@ -691,7 +692,8 @@ function renderStreaming(text) {
 }
 function renderFinal(text) {
   outputContent.style.whiteSpace = '';
-  outputContent.innerHTML = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
+  const raw = window.marked ? marked.parse(text) : escapeHtml(text).replace(/\n/g,'<br>');
+  outputContent.innerHTML = window.DOMPurify ? DOMPurify.sanitize(raw) : raw;
   btnCopy.classList.remove('hidden');
   if (btnDownload) btnDownload.classList.remove('hidden');
   if (btnSave)     btnSave.classList.remove('hidden');
@@ -726,8 +728,12 @@ function markDone(id) {
 }
 
 /* ── Saved Sessions ──────────────────────────────────────── */
-function getSessions() { return JSON.parse(localStorage.getItem('pm_sessions') || '[]'); }
-function saveSessions(s) { localStorage.setItem('pm_sessions', JSON.stringify(s)); }
+function getSessions() {
+  try { return JSON.parse(localStorage.getItem('pm_sessions') || '[]'); } catch { return []; }
+}
+function saveSessions(s) {
+  try { localStorage.setItem('pm_sessions', JSON.stringify(s)); } catch { /* storage full — silently skip */ }
+}
 
 function updateSavedCount() {
   const count  = getSessions().length;
@@ -754,7 +760,7 @@ function saveSession() {
     content: fullOutput,
     savedAt: new Date().toISOString()
   });
-  saveSessions(sessions);
+  saveSessions(sessions.slice(0, 50));
   updateSavedCount();
   if (btnSave) { btnSave.textContent = '✓ Saved!'; setTimeout(() => { btnSave.textContent = '💾 Save'; }, 2000); }
 }

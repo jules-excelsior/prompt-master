@@ -174,7 +174,8 @@
   <!-- Top Header -->
   <header class="dash-header">
     <div class="dash-brand">
-      <div class="dash-brand-icon">⚡</div>
+      <img src="excelsior-logo.png" alt="Excelsior" class="dash-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"/>
+      <div class="dash-brand-icon" style="display:none">⚡</div>
       <div>
         <div class="dash-brand-name">PromptMaster</div>
         <div class="dash-brand-tag" id="brand-tag">AI Social Media Agency</div>
@@ -262,6 +263,7 @@
       <div class="sidebar-bottom">
         <button class="sidebar-action admin-only" id="open-settings-sb">⚙ Settings</button>
         <a class="sidebar-action" href="index.html">← Home</a>
+        <div class="sidebar-credit">Built by Jules Villarta</div>
       </div>
     </aside>
 
@@ -358,6 +360,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

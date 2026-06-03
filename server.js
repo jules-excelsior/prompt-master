@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* ── Dashboard route ───────────────────────────────────────── */
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+
 /* ── Data persistence ──────────────────────────────────────── */
 const DATA_DIR      = path.join(__dirname, 'data');
 const USERS_FILE    = path.join(DATA_DIR, 'users.json');
@@ -35,8 +38,11 @@ function getAdminPassword() {
   return loadSettings().adminPassword || process.env.ADMIN_PASSWORD || 'admin2025';
 }
 
-function hashPassword(p) {
-  return crypto.createHash('sha256').update(p + 'pm_salt_2025').digest('hex');
+function generateSalt() {
+  return crypto.randomBytes(16).toString('hex');
+}
+function hashPassword(p, salt) {
+  return crypto.createHash('sha256').update(p + (salt || 'pm_salt_2025')).digest('hex');
 }
 
 function loadUsage() {
@@ -53,23 +59,24 @@ function saveLimits(l) { fs.writeFileSync(LIMITS_FILE, JSON.stringify(l, null, 2
 
 function getDailyLimit()       { return loadLimits().dailyLimitPerUser || 20; }
 function isGenerationPaused()  { return loadLimits().isPaused || false; }
-function today()               { return new Date().toISOString().split('T')[0]; }
+function today() {
+  // Philippine Standard Time (UTC+8) — daily limits reset at PH midnight
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
 
-function checkAndRecordUsage(email) {
+function checkAndRecordUsage(key) {
   if (isGenerationPaused())
     return { allowed: false, reason: 'All generations are currently paused by the administrator.' };
 
-  if (!email || email === 'admin') return { allowed: true };
-
   const usage = loadUsage();
   const limit = getDailyLimit();
-  const count = (usage[email] || {})[today()] || 0;
+  const count = (usage[key] || {})[today()] || 0;
 
   if (count >= limit)
     return { allowed: false, reason: `Daily limit of ${limit} generations reached. Resets at midnight.` };
 
-  if (!usage[email]) usage[email] = {};
-  usage[email][today()] = count + 1;
+  if (!usage[key]) usage[key] = {};
+  usage[key][today()] = count + 1;
   saveUsage(usage);
   return { allowed: true, remaining: limit - count - 1 };
 }
@@ -92,7 +99,7 @@ app.get('/api/config', (req, res) => {
 });
 
 /* ── User Registration ─────────────────────────────────────── */
-app.post('/api/register', (req, res) => {
+app.post('/api/register', rateLimit(10), (req, res) => {
   const { firstName, email, password } = req.body;
   if (!firstName || !email || !password)
     return res.status(400).json({ error: 'All fields are required.' });
@@ -103,11 +110,13 @@ app.post('/api/register', (req, res) => {
   if (users.find(u => u.email === email.trim().toLowerCase()))
     return res.status(409).json({ error: 'Email is already registered.' });
 
+  const salt = generateSalt();
   const user = {
     id:           crypto.randomUUID(),
     firstName:    firstName.trim(),
     email:        email.trim().toLowerCase(),
-    passwordHash: hashPassword(password),
+    salt,
+    passwordHash: hashPassword(password, salt),
     joinedAt:     new Date().toISOString()
   };
   users.push(user);
@@ -116,20 +125,20 @@ app.post('/api/register', (req, res) => {
 });
 
 /* ── User Login ────────────────────────────────────────────── */
-app.post('/api/user-login', (req, res) => {
+app.post('/api/user-login', rateLimit(10), (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required.' });
 
   const users = loadUsers();
   const user  = users.find(u => u.email === email.trim().toLowerCase());
-  if (!user || user.passwordHash !== hashPassword(password))
+  if (!user || user.passwordHash !== hashPassword(password, user.salt))
     return res.status(401).json({ success: false, error: 'Invalid email or password.' });
 
   res.json({ success: true, firstName: user.firstName });
 });
 
 /* ── Admin Auth ────────────────────────────────────────────── */
-app.post('/api/verify-admin', (req, res) => {
+app.post('/api/verify-admin', rateLimit(5), (req, res) => {
   const { password } = req.body;
   if (password === getAdminPassword()) res.json({ success: true });
   else res.status(401).json({ success: false, error: 'Invalid password' });
@@ -242,12 +251,21 @@ app.post('/api/admin/limits', (req, res) => {
 app.post('/api/generate', rateLimit(20), async (req, res) => {
   const { systemPrompt, userPrompt, apiKey, model, provider = 'anthropic', userEmail } = req.body;
 
-  const usageCheck = checkAndRecordUsage((userEmail || '').toLowerCase().trim());
-  if (!usageCheck.allowed) return res.status(429).json({ error: usageCheck.reason });
+  // Validate provider before setting streaming headers
+  if (provider !== 'anthropic' && provider !== 'deepseek')
+    return res.status(400).json({ error: 'Unknown provider.' });
 
   const effectiveKey = SERVER_KEYS[provider] || apiKey;
   if (!effectiveKey) return res.status(400).json({ error: 'No API key configured for this provider.' });
   if (!userPrompt)   return res.status(400).json({ error: 'Prompt required.' });
+
+  // Admins bypass daily limits; regular users tracked by email or IP fallback
+  const isAdminReq = req.headers['x-admin-password'] === getAdminPassword();
+  if (!isAdminReq) {
+    const trackingKey = (userEmail || '').toLowerCase().trim() || req.ip;
+    const usageCheck  = checkAndRecordUsage(trackingKey);
+    if (!usageCheck.allowed) return res.status(429).json({ error: usageCheck.reason });
+  }
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.setHeader('Transfer-Encoding', 'chunked');
@@ -264,11 +282,13 @@ app.post('/api/generate', rateLimit(20), async (req, res) => {
         messages: [{ role: 'user', content: userPrompt }]
       });
       stream.on('text', (text) => res.write(text));
-      stream.on('error', (err) => { res.write(`\n\n[Error: ${err.message}]`); res.end(); });
+      stream.on('error', (err) => {
+        if (!res.writableEnded) { res.write(`\n\n[Error: ${err.message}]`); res.end(); }
+      });
       await stream.finalMessage();
-      res.end();
+      if (!res.writableEnded) res.end();
 
-    } else if (provider === 'deepseek') {
+    } else {
       const selectedModel = DEEPSEEK_MODELS.includes(model) ? model : 'deepseek-chat';
       const client = new OpenAI({ apiKey: effectiveKey, baseURL: 'https://api.deepseek.com' });
       const stream = await client.chat.completions.create({
@@ -282,15 +302,12 @@ app.post('/api/generate', rateLimit(20), async (req, res) => {
         const text = chunk.choices[0]?.delta?.content || '';
         if (text) res.write(text);
       }
-      res.end();
-
-    } else {
-      res.status(400).json({ error: 'Unknown provider.' });
+      if (!res.writableEnded) res.end();
     }
   } catch (err) {
     const msg = err.message || 'Unknown error';
     if (!res.headersSent) res.status(500).json({ error: msg });
-    else { res.write(`\n\n[Error: ${msg}]`); res.end(); }
+    else if (!res.writableEnded) { res.write(`\n\n[Error: ${msg}]`); res.end(); }
   }
 });
 
