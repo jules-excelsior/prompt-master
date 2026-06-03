@@ -3,8 +3,10 @@
 ## Workflow preferences
 
 - **Never stop mid-task without asking.** If something needs a fix, ask the user whether to proceed with the fix rather than stopping silently.
-- **Run git commands directly in this container.** Never ask the user to run git commands themselves — do it here (commit, push, pull, branch, etc.).
-- **Always commit and push after completing a task** unless the user asks otherwise.
+- **Always ask before any commit or push.** Never commit or push without the user's explicit go-ahead — this prevents conflicts.
+- **Offer to run commands instead of assuming.** When Git Bash / a terminal is available, ask "Would you like me to run this in Git Bash for you?" (or a similar confirmation) before running anything that changes state — don't silently run it, and don't make the user run it manually if you're able to do it yourself.
+- **Quick read-only checks** (`git status`, `git diff`, `git log`) may be run directly to investigate.
+- **If the user declines, or you can't execute**, hand the user the exact Git Bash commands to run themselves.
 
 ## Project overview
 
