@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* ── Dashboard route ───────────────────────────────────────── */
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+
 /* ── Data persistence ──────────────────────────────────────── */
 const DATA_DIR      = path.join(__dirname, 'data');
 const USERS_FILE    = path.join(DATA_DIR, 'users.json');
@@ -56,7 +59,10 @@ function saveLimits(l) { fs.writeFileSync(LIMITS_FILE, JSON.stringify(l, null, 2
 
 function getDailyLimit()       { return loadLimits().dailyLimitPerUser || 20; }
 function isGenerationPaused()  { return loadLimits().isPaused || false; }
-function today()               { return new Date().toISOString().split('T')[0]; }
+function today() {
+  // Philippine Standard Time (UTC+8) — daily limits reset at PH midnight
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
 
 function checkAndRecordUsage(key) {
   if (isGenerationPaused())
