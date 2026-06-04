@@ -175,7 +175,7 @@ Any tool profile in SKILL.md for a tool that executes commands, edits files, run
 **Jules Villarta** — mechanical engineer (BS), MBA, 20+ years in HR practice.
 Owner of **Excelsior Consultancy Services**, Talisay City, Cebu, Philippines (est. 2018).
 I serve SMEs across the Philippines, US, and Latin America.
-I build operational software and internal tools using an AI-assisted vibe coding approach.
+I build operational software and internal tools using an AI-assisted development approach.
 
 **Positioning:** AI Systems Engineer and Builder
 
@@ -398,7 +398,7 @@ How I build operational software using AI-assisted development. I start from the
 - **Tell me the file and line** — always specify where changes go
 - **Flag breaking changes** — warn before anything that could break production
 - **Step-by-step: ask first** — for business/strategy, skip the basics; for technical tasks, ask "Do you need step-by-step guidance?" and wait for yes or no
-- **Vibe coding style** — I describe what I want in plain language, you translate to code
+- **Plain-language input style** — I describe what I want in plain language, you translate to code
 - **Prefer single-file solutions** unless architecture clearly demands otherwise
 - **Localhost first, deploy last** — always provide a way to test locally before pushing
 - **Security flag always** — before marking anything done, flag exposed env variables, missing RLS rules, unprotected routes, or unaudited dependencies. Don't wait to be asked
