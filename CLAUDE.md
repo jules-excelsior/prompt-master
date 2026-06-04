@@ -167,6 +167,24 @@ NEVER fabricate statistics, data points, or claims not explicitly present in sou
 
 ---
 
+## Working Effectively with AI Tools
+
+These principles apply when using Prompt Master — or any AI tool — for development work. AI-assisted development is a skill. Prompting without these habits is hoping for the best.
+
+**1. Give AI real context, not just symptoms.**
+Don't paste only the error message. Include the container logs, the database schema, the API contract, the relevant file — whatever surrounds the problem. AI output quality is a direct function of the context quality you provide. Garbage in, garbage out.
+
+**2. Ask for approaches before asking for code.**
+When you don't know how something should be implemented, ask the AI to lay out 2–3 approaches with trade-offs before writing a single line. Pick the right approach, then plan the implementation. Asking for code before the architecture is decided produces code you'll throw away.
+
+**3. Plan incrementally. Build incrementally.**
+Break every feature into subproblems. Define the specific files, the end goal, the MVP boundary. Make changes small enough that you can actually test and validate each one before moving to the next. A single large prompt that builds an entire feature is a scope failure — use sequential prompts with checkpoints.
+
+**4. Review the output like an architect, not a typist.**
+After AI writes code, trace the flow yourself. Ask: What changed? What does this function actually do? What is missing or assumed? You build real architecture understanding through review, not by blindly running commands and hoping the result is correct.
+
+---
+
 ## Current Version
 
 **1.6.0** — Opus 4.7 compatibility update. Added Template M, updated Claude and Claude Code routing for adaptive thinking and xhigh effort defaults, added patterns 36–37 for Opus 4.7 prompt failures.
