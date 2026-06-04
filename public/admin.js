@@ -188,6 +188,8 @@ function isAdmin()     { return sessionStorage.getItem('pm_role') === 'admin'; }
 function getUserName() { return sessionStorage.getItem('pm_user_name') || ''; }
 function getUserEmail(){ return sessionStorage.getItem('pm_user_email') || ''; }
 function getAdminPw()  { return sessionStorage.getItem('pm_admin_pw') || ''; }
+function getTier()     { return sessionStorage.getItem('pm_tier') || 'free'; }
+function isPremium()   { return isAdmin() || getTier() === 'premium'; }
 
 /* ── DOM ─────────────────────────────────────────────────── */
 const loginScreen   = document.getElementById('login-screen');
@@ -266,6 +268,7 @@ async function userLogin() {
       sessionStorage.setItem('pm_role', 'user');
       sessionStorage.setItem('pm_user_name', data.firstName);
       sessionStorage.setItem('pm_user_email', email.toLowerCase());
+      sessionStorage.setItem('pm_tier', data.tier || 'free');
       showDashboard();
     } else {
       errEl.textContent = data.error || 'Invalid email or password.';
@@ -312,6 +315,7 @@ document.getElementById('btn-logout').onclick = () => {
   sessionStorage.removeItem('pm_admin_pw');
   sessionStorage.removeItem('pm_user_name');
   sessionStorage.removeItem('pm_user_email');
+  sessionStorage.removeItem('pm_tier');
   location.reload();
 };
 
@@ -359,6 +363,23 @@ function applyRoleUI() {
     const title = document.getElementById('overview-title');
     if (title) title.textContent = `Welcome, ${firstName}`;
   }
+
+  // Lock free users to DeepSeek on load
+  if (!isPremium() && currentProvider === 'anthropic') {
+    currentProvider = 'deepseek';
+    localStorage.setItem('pm_provider', 'deepseek');
+  }
+
+  // Show/hide tier badge on provider buttons
+  document.querySelectorAll('.provider-btn[data-provider="anthropic"]').forEach(btn => {
+    if (!btn.querySelector('.tier-lock')) {
+      const lock = document.createElement('span');
+      lock.className = 'tier-lock';
+      lock.textContent = isPremium() ? '' : ' ⭐';
+      lock.title = isPremium() ? '' : 'Premium only';
+      btn.appendChild(lock);
+    }
+  });
 }
 
 /* ── Check server config ─────────────────────────────────── */
@@ -397,6 +418,10 @@ function saveSettings() {
 }
 
 function switchProvider(p) {
+  if (p === 'anthropic' && !isPremium()) {
+    alert('Anthropic Claude is available for Premium members only. Contact the admin to upgrade your account.');
+    return;
+  }
   currentProvider = p;
   localStorage.setItem('pm_provider', p);
   document.querySelectorAll('.provider-btn').forEach(btn => {
@@ -858,7 +883,7 @@ async function openUsersView() {
     table.className = 'users-table';
     table.innerHTML = `
       <thead>
-        <tr><th>#</th><th>First Name</th><th>Email</th><th>Joined</th><th></th></tr>
+        <tr><th>#</th><th>First Name</th><th>Email</th><th>Tier</th><th>Joined</th><th></th></tr>
       </thead>
       <tbody>
         ${data.users.map((u, i) => `
@@ -866,14 +891,21 @@ async function openUsersView() {
             <td class="row-num">${i + 1}</td>
             <td><strong>${escapeHtml(u.firstName)}</strong></td>
             <td class="email-cell">${escapeHtml(u.email)}</td>
+            <td><span class="tier-badge tier-${escapeHtml(u.tier || 'free')}">${u.tier === 'premium' ? '⭐ Premium' : 'Free'}</span></td>
             <td class="date-cell">${new Date(u.joinedAt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })}</td>
-            <td><button class="user-del-btn" data-id="${escapeHtml(u.id)}" data-name="${escapeHtml(u.firstName)}" title="Delete user">✕</button></td>
+            <td class="user-actions">
+              <button class="user-tier-btn" data-id="${escapeHtml(u.id)}" data-name="${escapeHtml(u.firstName)}" data-tier="${escapeHtml(u.tier || 'free')}" title="${u.tier === 'premium' ? 'Downgrade to Free' : 'Upgrade to Premium'}">${u.tier === 'premium' ? '↓ Free' : '↑ Premium'}</button>
+              <button class="user-del-btn" data-id="${escapeHtml(u.id)}" data-name="${escapeHtml(u.firstName)}" title="Delete user">✕</button>
+            </td>
           </tr>`).join('')}
       </tbody>`;
     wrap.innerHTML = '';
     wrap.appendChild(table);
     wrap.querySelectorAll('.user-del-btn').forEach(btn => {
       btn.addEventListener('click', () => deleteUser(btn.dataset.id, btn.dataset.name));
+    });
+    wrap.querySelectorAll('.user-tier-btn').forEach(btn => {
+      btn.addEventListener('click', () => setUserTier(btn.dataset.id, btn.dataset.name, btn.dataset.tier));
     });
   } catch (err) {
     wrap.innerHTML = `<div class="users-empty"><p style="color:#ef4444">Failed to load: ${escapeHtml(err.message)}</p></div>`;
@@ -896,6 +928,25 @@ async function deleteUser(id, name) {
     } else {
       const data = await res.json().catch(() => ({}));
       alert(data.error || 'Failed to delete user.');
+    }
+  } catch { alert('Connection error.'); }
+}
+
+async function setUserTier(id, name, currentTier) {
+  const newTier = currentTier === 'premium' ? 'free' : 'premium';
+  const label   = newTier === 'premium' ? 'upgrade to Premium' : 'downgrade to Free';
+  if (!confirm(`${label.charAt(0).toUpperCase() + label.slice(1)} "${name}"?`)) return;
+  try {
+    const res = await fetch('/api/admin/set-tier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': getAdminPw() },
+      body: JSON.stringify({ id, tier: newTier })
+    });
+    if (res.ok) {
+      openUsersView(); // refresh table
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Failed to update tier.');
     }
   } catch { alert('Connection error.'); }
 }

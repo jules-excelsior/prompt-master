@@ -117,6 +117,7 @@ app.post('/api/register', rateLimit(10), (req, res) => {
     email:        email.trim().toLowerCase(),
     salt,
     passwordHash: hashPassword(password, salt),
+    tier:         'free',
     joinedAt:     new Date().toISOString()
   };
   users.push(user);
@@ -134,7 +135,7 @@ app.post('/api/user-login', rateLimit(10), (req, res) => {
   if (!user || user.passwordHash !== hashPassword(password, user.salt))
     return res.status(401).json({ success: false, error: 'Invalid email or password.' });
 
-  res.json({ success: true, firstName: user.firstName });
+  res.json({ success: true, firstName: user.firstName, tier: user.tier || 'free' });
 });
 
 /* ── Admin Auth ────────────────────────────────────────────── */
@@ -153,7 +154,7 @@ app.get('/api/users', (req, res) => {
   const users = loadUsers();
   res.json({
     total: users.length,
-    users: users.map(u => ({ id: u.id, firstName: u.firstName, email: u.email, joinedAt: u.joinedAt }))
+    users: users.map(u => ({ id: u.id, firstName: u.firstName, email: u.email, tier: u.tier || 'free', joinedAt: u.joinedAt }))
   });
 });
 
@@ -183,6 +184,25 @@ app.delete('/api/users/:id', (req, res) => {
   users.splice(idx, 1);
   saveUsers(users);
   res.json({ success: true });
+});
+
+/* ── Admin: Set User Tier ──────────────────────────────────── */
+app.post('/api/admin/set-tier', (req, res) => {
+  const pwd = req.headers['x-admin-password'];
+  if (!pwd || pwd !== getAdminPassword())
+    return res.status(401).json({ error: 'Unauthorized' });
+
+  const { id, tier } = req.body;
+  if (!id || !['free', 'premium'].includes(tier))
+    return res.status(400).json({ error: 'Invalid request.' });
+
+  const users = loadUsers();
+  const user  = users.find(u => u.id === id);
+  if (!user) return res.status(404).json({ error: 'User not found.' });
+
+  user.tier = tier;
+  saveUsers(users);
+  res.json({ success: true, tier });
 });
 
 /* ── Rate limiting ─────────────────────────────────────────── */
@@ -262,6 +282,14 @@ app.post('/api/generate', rateLimit(20), async (req, res) => {
   // Admins bypass daily limits; regular users tracked by email or IP fallback
   const isAdminReq = req.headers['x-admin-password'] === getAdminPassword();
   if (!isAdminReq) {
+    // Free-tier users may only use DeepSeek; Anthropic is Premium only
+    if (provider === 'anthropic' && userEmail) {
+      const users = loadUsers();
+      const reqUser = users.find(u => u.email === (userEmail || '').toLowerCase().trim());
+      if (reqUser && (reqUser.tier || 'free') !== 'premium')
+        return res.status(403).json({ error: 'Anthropic Claude is available for Premium members only. Contact your admin to upgrade.' });
+    }
+
     const trackingKey = (userEmail || '').toLowerCase().trim() || req.ip;
     const usageCheck  = checkAndRecordUsage(trackingKey);
     if (!usageCheck.allowed) return res.status(429).json({ error: usageCheck.reason });

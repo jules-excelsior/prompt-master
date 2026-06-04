@@ -478,6 +478,19 @@ textarea{resize:vertical;min-height:100px;line-height:1.7;}
   color:rgba(239,68,68,.45);cursor:pointer;transition:all .15s;
 }
 .user-del-btn:hover{background:rgba(239,68,68,.09);border-color:rgba(239,68,68,.45);color:var(--red);}
+.user-actions{display:flex;gap:6px;align-items:center;}
+.user-tier-btn{
+  padding:4px 9px;border-radius:6px;font-size:11px;
+  background:transparent;border:1px solid rgba(184,151,90,.35);
+  color:rgba(184,151,90,.7);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.user-tier-btn:hover{background:rgba(184,151,90,.1);border-color:rgba(184,151,90,.7);color:#b8975a;}
+.tier-badge{
+  display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;
+}
+.tier-free{background:rgba(255,255,255,.06);color:var(--muted);}
+.tier-premium{background:rgba(184,151,90,.15);color:#b8975a;border:1px solid rgba(184,151,90,.3);}
+.tier-lock{font-size:10px;opacity:.6;margin-left:2px;}
 .users-loading{
   display:flex;align-items:center;gap:12px;color:var(--muted);
   font-size:14px;padding:40px 16px;
