@@ -5,6 +5,56 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [1.6.1] — 2026-06-04
+
+### Security Hardening & Bug Fixes
+
+#### Security — Auth
+
+- **Per-user random salt** — each new user registration generates a 16-byte hex salt stored alongside the password hash; eliminates rainbow-table attacks on shared-salt hashes
+- Backward-compatible: existing accounts without a stored salt fall back to the legacy static salt (`pm_salt_2025`) at login
+- **Rate limiting extended** — `/api/register` and `/api/user-login` now capped at 10 req/min per IP; `/api/verify-admin` capped at 5 req/min per IP
+
+#### Security — AI Output
+
+- **DOMPurify XSS sanitization** — all AI-generated markdown is sanitized with DOMPurify before being set as `innerHTML` in `renderFinal()`; prevents script injection via model output
+- DOMPurify loaded via CDN in `admin.html` (before `admin.js`)
+
+#### Security — Session Storage
+
+- **localStorage 50-session cap** — `saveSession()` now enforces a hard cap of 50 saved sessions, trimming oldest entries first; prevents unbounded `localStorage` growth
+- `saveSessions()` wrapped in `try/catch` to handle `QuotaExceededError` gracefully
+
+#### Security — Admin Bypass
+
+- **`x-admin-password` header verification** in `/api/generate` — admin requests bypass per-user daily limits after password is validated server-side; prevents forged bypass attempts
+
+#### Security — Usage Tracking
+
+- **IP fallback tracking** — unauthenticated generate requests now tracked by `req.ip` instead of silently bypassing usage checks; closes the anonymous-request exemption
+
+#### Security — Response Integrity
+
+- **`res.writableEnded` guards** in the generate endpoint — prevents double `res.end()` crashes when an error occurs after streaming has started
+
+#### Bug — Routing
+
+- **`/dashboard` route added** — `GET /dashboard` now serves `admin.html`; route was documented but missing from `server.js`
+
+#### Bug — Daily Limit Reset
+
+- **Philippine Standard Time (PST UTC+8) reset** — `today()` now returns the current date in PST (`Date.now() + 8 * 60 * 60 * 1000`) instead of UTC; daily limits reset at Philippine midnight
+
+#### Bug — Logout
+
+- **`pm_user_email` cleared on logout** — `sessionStorage.removeItem('pm_user_email')` added to the logout flow; prevents stale email from carrying over to a new session
+
+#### Bug — Admin Settings
+
+- **Null guard on `loadAdminLimits`** — `limitInput` existence checked before setting `.value`; prevents a crash when the settings modal element is absent
+
+---
+
 ## [1.6.0] — 2026-06-02
 
 ### 🚀 4 New Modules + Save Sessions Library
