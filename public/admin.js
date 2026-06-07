@@ -104,11 +104,20 @@ const statusDot     = document.getElementById('status-dot');
 const statusLabel   = document.getElementById('status-label');
 const statDone      = document.getElementById('stat-done');
 const modelPill     = document.getElementById('model-pill');
-const docDrawer     = document.getElementById('doc-drawer');
-const drawerOverlay = document.getElementById('drawer-overlay');
-const drawerTitle   = document.getElementById('drawer-title');
-const drawerLoader  = document.getElementById('drawer-loader');
-const docsBody      = document.getElementById('docs-body');
+const docDrawer        = document.getElementById('doc-drawer');
+const drawerOverlay    = document.getElementById('drawer-overlay');
+const drawerTitle      = document.getElementById('drawer-title');
+const drawerLoader     = document.getElementById('drawer-loader');
+const docsBody         = document.getElementById('docs-body');
+
+/* ── DeepSeek DOM ────────────────────────────────────────── */
+const providerTabs         = document.querySelectorAll('.provider-tab');
+const modelSectionClaude   = document.getElementById('model-section-claude');
+const modelSectionDeepSeek = document.getElementById('model-section-deepseek');
+const deepseekKeySection   = document.getElementById('deepseek-key-section');
+const deepseekKeyInput     = document.getElementById('deepseek-key-input');
+const modelSelectClaude    = document.getElementById('model-select-claude');
+const modelSelectDeepSeek  = document.getElementById('model-select-deepseek');
 
 /* ── Auth ────────────────────────────────────────────────── */
 (function checkAuth() {
@@ -148,65 +157,132 @@ async function showDashboard() {
 
 /* ── Check server config ─────────────────────────────────── */
 let serverHasKey = false;
+let serverHasDeepSeekKey = false;
 async function checkServerConfig() {
   try {
     const res  = await fetch('/api/config');
     const data = await res.json();
     serverHasKey = data.hasServerKey;
+    serverHasDeepSeekKey = data.hasDeepSeekKey;
 
     const serverNotice  = document.getElementById('server-key-notice');
     const userKeySection = document.getElementById('user-key-section');
 
-    if (serverHasKey) {
+    if (serverHasKey || serverHasDeepSeekKey) {
       serverNotice.classList.remove('hidden');
       userKeySection.classList.add('hidden');
+      deepseekKeySection.classList.add('hidden');
       // Mark API status as active even without a user key
       statusDot.classList.add('on');
       statusLabel.textContent = 'API ready';
     }
 
     if (data.defaultModel) {
-      const sel = document.getElementById('model-select');
+      const sel = document.getElementById('model-select-claude');
       if (sel) sel.value = data.defaultModel;
       localStorage.setItem('pm_model', data.defaultModel);
+    }
+    if (data.defaultProvider) {
+      localStorage.setItem('pm_provider', data.defaultProvider);
     }
   } catch { /* server config fetch failed — degrade gracefully */ }
 }
 
 /* ── Settings ────────────────────────────────────────────── */
+function getProvider() {
+  return localStorage.getItem('pm_provider') || 'claude';
+}
+
 function loadSettings() {
-  const key   = localStorage.getItem('pm_api_key') || '';
-  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
-  apiKeyInput.value = key;
-  modelSelect.value = model;
-  updateApiStatus(!!key, model);
+  const provider = getProvider();
+  const claudeKey = localStorage.getItem('pm_api_key') || '';
+  const deepseekKey = localStorage.getItem('pm_deepseek_key') || '';
+  const claudeModel = localStorage.getItem('pm_model') || 'claude-opus-4-8';
+  const deepseekModel = localStorage.getItem('pm_deepseek_model') || 'deepseek-chat';
+
+  apiKeyInput.value = claudeKey;
+  deepseekKeyInput.value = deepseekKey;
+  modelSelectClaude.value = claudeModel;
+  modelSelectDeepSeek.value = deepseekModel;
+
+  // Show active provider tab
+  document.querySelectorAll('.provider-tab').forEach(t => t.classList.toggle('active', t.dataset.provider === provider));
+  modelSectionClaude.classList.toggle('hidden', provider !== 'claude');
+  modelSectionDeepSeek.classList.toggle('hidden', provider !== 'deepseek');
+  deepseekKeySection.classList.toggle('hidden', provider !== 'deepseek');
+
+  updateApiStatus(provider);
 }
 
 function saveSettings() {
-  const key   = apiKeyInput.value.trim();
-  const model = modelSelect.value;
-  if (key) localStorage.setItem('pm_api_key', key);
-  localStorage.setItem('pm_model', model);
-  updateApiStatus(!!key, model);
+  const provider = getProvider();
+  const claudeKey = apiKeyInput.value.trim();
+  const deepseekKey = deepseekKeyInput.value.trim();
+  const claudeModel = modelSelectClaude.value;
+  const deepseekModel = modelSelectDeepSeek.value;
+
+  if (claudeKey) localStorage.setItem('pm_api_key', claudeKey);
+  if (deepseekKey) localStorage.setItem('pm_deepseek_key', deepseekKey);
+  localStorage.setItem('pm_model', claudeModel);
+  localStorage.setItem('pm_deepseek_model', deepseekModel);
+
+  updateApiStatus(provider);
   savedMsg.classList.remove('hidden');
   setTimeout(() => savedMsg.classList.add('hidden'), 2000);
 }
 
-function updateApiStatus(hasKey, model) {
-  statusDot.classList.toggle('on', hasKey);
-  statusLabel.textContent = hasKey ? 'API key set' : 'No API key';
+function updateApiStatus(provider) {
+  const isClaude = provider === 'claude';
+  const hasKey = isClaude
+    ? !!(localStorage.getItem('pm_api_key'))
+    : !!(localStorage.getItem('pm_deepseek_key'));
+
+  if (serverHasKey || serverHasDeepSeekKey) {
+    statusDot.classList.add('on');
+    statusLabel.textContent = 'API ready';
+  } else {
+    statusDot.classList.toggle('on', hasKey);
+    statusLabel.textContent = hasKey ? 'API key set' : 'No API key';
+  }
+
   if (modelPill) {
-    const n = (model || '').includes('opus') ? 'Opus 4.8' : (model || '').includes('sonnet') ? 'Sonnet 4.6' : 'Haiku 4.5';
+    const model = isClaude
+      ? localStorage.getItem('pm_model') || 'claude-opus-4-8'
+      : localStorage.getItem('pm_deepseek_model') || 'deepseek-chat';
+    const n = model.includes('opus') ? 'Opus 4.8'
+      : model.includes('sonnet') ? 'Sonnet 4.6'
+      : model.includes('haiku') ? 'Haiku 4.5'
+      : model.includes('reasoner') ? 'R1'
+      : model.includes('chat') ? 'V3'
+      : model;
     modelPill.textContent = n;
   }
 }
 
+/* ── Provider Tab Switching ──────────────────────────────── */
+document.querySelectorAll('.provider-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const provider = tab.dataset.provider;
+    localStorage.setItem('pm_provider', provider);
+
+    modelSectionClaude.classList.toggle('hidden', provider !== 'claude');
+    modelSectionDeepSeek.classList.toggle('hidden', provider !== 'deepseek');
+    deepseekKeySection.classList.toggle('hidden', provider !== 'deepseek');
+
+    updateApiStatus(provider);
+  };
+});
+
+/* ── Settings Modal Events ───────────────────────────────── */
 [document.getElementById('open-settings'), document.getElementById('open-settings-sb')].forEach(el => {
   if (el) el.onclick = () => settingsModal.classList.remove('hidden');
 });
 document.getElementById('close-settings').onclick = () => settingsModal.classList.add('hidden');
 document.getElementById('save-settings').onclick  = saveSettings;
 document.getElementById('toggle-key').onclick = () => { apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password'; };
+document.getElementById('toggle-deepseek-key').onclick = () => { deepseekKeyInput.type = deepseekKeyInput.type === 'password' ? 'text' : 'password'; };
 settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) settingsModal.classList.add('hidden'); });
 
 /* ── Stats ───────────────────────────────────────────────── */
@@ -315,18 +391,40 @@ btnCopy.onclick     = copyOutput;
 
 async function generate() {
   if (isGenerating) return;
-  const apiKey = localStorage.getItem('pm_api_key');
-  // Only prompt for key if server doesn't have one configured
-  if (!serverHasKey && !apiKey) { settingsModal.classList.remove('hidden'); return; }
+
+  const provider = getProvider();
+  const isClaude = provider === 'claude';
+
+  // Resolve API key based on provider
+  const apiKey = isClaude
+    ? localStorage.getItem('pm_api_key')
+    : localStorage.getItem('pm_deepseek_key');
+
+  // Check if server has the key for this provider
+  const serverHasThisKey = isClaude ? serverHasKey : serverHasDeepSeekKey;
+
+  if (!serverHasThisKey && !apiKey) {
+    settingsModal.classList.remove('hidden');
+    return;
+  }
+
   const m = MODULES.find(x => x.id === activeModuleId);
   if (!m) return;
   const values = {}; let valid = true;
   m.inputs.forEach(inp => { const el = document.getElementById(`inp-${inp.id}`); values[inp.id] = el ? el.value.trim() : ''; if (!values[inp.id] && inp.type !== 'select') valid = false; });
   if (!valid) { alert('Please fill in all fields before generating.'); return; }
   setGenerating(true); clearOutput(); showOutputArea(); fullOutput = '';
-  const model = localStorage.getItem('pm_model') || 'claude-opus-4-8';
+
+  const model = isClaude
+    ? (localStorage.getItem('pm_model') || 'claude-opus-4-8')
+    : (localStorage.getItem('pm_deepseek_model') || 'deepseek-chat');
+
   try {
-    const resp = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model }) });
+    const resp = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemPrompt: m.system, userPrompt: m.prompt(values), apiKey, model, provider })
+    });
     if (!resp.ok) { const err = await resp.json().catch(() => ({ error: resp.statusText })); throw new Error(err.error || resp.statusText); }
     const reader = resp.body.getReader(); const decoder = new TextDecoder();
     while (true) { const { done, value } = await reader.read(); if (done) break; fullOutput += decoder.decode(value, { stream: true }); renderStreaming(fullOutput); }
@@ -365,7 +463,7 @@ function markDone(id) {
 }
 
 /* ── Doc Drawer ──────────────────────────────────────────── */
-const DOC_TITLES = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog' };
+const DOC_TITLES = { workflow: '⚙ Workflow', documentation: '📖 Documentation', changelog: '📋 Changelog', 'deepseek-guide': '🔮 DeepSeek Guide' };
 
 async function openDrawer(type) {
   drawerTitle.textContent = DOC_TITLES[type] || type;
